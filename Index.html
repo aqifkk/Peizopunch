@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PiezoPunch Network - Next-Gen Arcade System</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            arcade: ['Orbitron', 'sans-serif'],
+          },
+          colors: {
+            neonCyan: '#00f3ff',
+            neonMagenta: '#ff007f',
+            neonYellow: '#ffea00',
+            darkGlass: 'rgba(15, 23, 42, 0.85)',
+          },
+          boxShadow: {
+            glowCyan: '0 0 25px rgba(0, 243, 255, 0.35)',
+            glowMagenta: '0 0 25px rgba(255, 0, 127, 0.35)',
+            glowYellow: '0 0 25px rgba(255, 234, 0, 0.35)',
+            glowGold: '0 0 30px rgba(245, 158, 11, 0.4)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .neon-border-cyan {
+      border: 1px solid rgba(0, 243, 255, 0.4);
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+    }
+    .neon-border-magenta {
+      border: 1px solid rgba(255, 0, 127, 0.4);
+      box-shadow: 0 0 15px rgba(255, 0, 127, 0.2);
+    }
+    .neon-border-gold {
+      border: 1px solid rgba(245, 158, 11, 0.6);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+    }
+    .gauge-bg { stroke: #1e293b; }
+    .gauge-fill {
+      transition: stroke-dashoffset 0.15s cubic-bezier(0.1, 0.9, 0.2, 1), stroke 0.2s ease;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.8; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.02); }
+    }
+    .animate-pulse-glow { animation: pulseGlow 2.5s infinite ease-in-out; }
+  </style>
+</head>
+<body class="h-full text-slate-100 font-sans antialiased bg-slate-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(0,243,255,0.12),rgba(255,255,255,0))] selection:bg-neonMagenta selection:text-white">
+
+  <!-- Main Container -->
+  <div id="app" class="min-h-screen flex flex-col justify-between">
+    
+    <!-- SCREEN 1: LOGIN / SIGNUP OVERLAY (Visible when not logged in) -->
+    <div id="authScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl">
+      <div class="glass-panel max-w-md w-full rounded-3xl p-8 border border-neonCyan/40 shadow-glowCyan relative overflow-hidden">
+        
+        <!-- Neon Ambient Accents -->
+        <div class="absolute -top-12 -left-12 w-32 h-32 bg-neonCyan/20 rounded-full blur-2xl"></div>
+        <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-neonMagenta/20 rounded-full blur-2xl"></div>
+
+        <div class="text-center mb-8 relative z-10">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-neonMagenta to-neonCyan p-0.5 mx-auto mb-4 shadow-glowCyan animate-pulse-glow">
+            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
+              <i class="fa-solid fa-hand-fist text-neonCyan text-2xl"></i>
+            </div>
+          </div>
+          <h1 class="font-arcade font-black text-2xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-neonCyan via-white to-neonMagenta">
+            WELCOME TO PIEZOPUNCH NETWORK
+          </h1>
+          <p class="text-xs font-mono text-slate-400 mt-2 uppercase tracking-widest">Global Arcade Fighter System</p>
+        </div>
+
+        <!-- FORM TOGGLE TABS -->
+        <div class="flex bg-slate-900/90 p-1 rounded-xl mb-6 border border-slate-800 text-xs font-arcade">
+          <button id="tabLoginBtn" onclick="switchAuthTab('login')" class="w-1/2 py-2.5 rounded-lg text-neonCyan bg-slate-800 font-bold transition">
+            Log In
+          </button>
+          <button id="tabSignupBtn" onclick="switchAuthTab('signup')" class="w-1/2 py-2.5 rounded-lg text-slate-400 hover:text-white transition">
+            Sign Up
+          </button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4 relative z-10">
+          <div>
+            <label class="block text-xs font-mono text-slate-300 mb-1">Username</label>
+            <div class="relative">
+              <i class="fa-solid fa-user absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+              <input type="text" id="loginUsername" required placeholder="Enter username" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-neonCyan font-mono">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-mono text-slate-300 mb-1">Password</label>
+            <div class="relative">
+              <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+              <input type="password" id="loginPassword" required placeholder="Enter password" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-neonCyan font-mono">
+            </div>
+          </div>
+
+          <div id="loginError" class="text-xs font-mono text-neonMagenta hidden text-center pt-1">
+            <i class="fa-solid fa-triangle-exclamation mr-1"></i> Invalid Username or Password!
+          </div>
+
+          <button type="submit" class="w-full bg-gradient-to-r from-neonCyan to-blue-600 text-slate-950 font-arcade font-bold py-3.5 rounded-xl shadow-glowCyan hover:opacity-90 transition uppercase tracking-wider text-xs mt-2">
+            Log In To Network <i class="fa-solid fa-right-to-bracket ml-1.5"></i>
+          </button>
+        </form>
+
+        <!-- SIGNUP FORM -->
+        <form id="signupForm" onsubmit="handleSignup(event)" class="space-y-4 relative z-10 hidden">
+          <div>
+            <label class="block text-xs font-mono text-slate-300 mb-1">Choose Username</label>
+            <div class="relative">
+              <i class="fa-solid fa-user-plus absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+              <input type="text" id="signupUsername" required placeholder="e.g. IronFist99" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-neonMagenta font-mono">
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1 font-mono">Your password will be generated automatically!</p>
+          </div>
+
+          <button type="submit" class="w-full bg-gradient-to-r from-neonMagenta to-purple-600 text-white font-arcade font-bold py-3.5 rounded-xl shadow-glowMagenta hover:opacity-90 transition uppercase tracking-wider text-xs mt-2">
+            Create Account & Generate Pass <i class="fa-solid fa-key ml-1.5"></i>
+          </button>
+        </form>
+
+      </div>
+    </div>
+
+    <!-- MODAL: AUTO-GENERATED PASSWORD DISPLAY -->
+    <div id="passModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md hidden">
+      <div class="glass-panel max-w-sm w-full rounded-3xl p-6 border border-neonYellow shadow-glowYellow text-center">
+        <div class="w-12 h-12 rounded-full bg-neonYellow/20 text-neonYellow flex items-center justify-center mx-auto mb-3 border border-neonYellow/40">
+          <i class="fa-solid fa-key text-xl"></i>
+        </div>
+        <h3 class="font-arcade text-lg font-bold text-white uppercase">Account Created!</h3>
+        <p class="text-xs text-slate-300 mt-2 font-mono">Your auto-generated security password is:</p>
+
+        <div class="my-4 p-3 bg-slate-900 rounded-xl border border-neonYellow/50 font-mono text-2xl font-black text-neonYellow tracking-wider" id="generatedPassDisplay">
+          PUNCH-0000
+        </div>
+
+        <p class="text-[11px] text-slate-400 font-mono mb-4">
+          <i class="fa-solid fa-circle-info text-neonCyan mr-1"></i> Remember this password or view it anytime under your <b>Profile</b> screen!
+        </p>
+
+        <button onclick="closePassModal()" class="w-full bg-neonYellow text-slate-950 font-arcade font-bold py-3 rounded-xl hover:bg-yellow-400 transition uppercase text-xs">
+          Got It, Let's Punch!
+        </button>
+      </div>
+    </div>
+
+    <!-- TOP NAVBAR (Visible after login) -->
+    <header class="border-b border-slate-800 glass-panel sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        
+        <!-- Brand Logo -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="switchNavTab('punch')">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-neonMagenta to-neonCyan p-0.5 flex items-center justify-center shadow-glowCyan">
+            <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+              <i class="fa-solid fa-hand-fist text-neonCyan text-base"></i>
+            </div>
+          </div>
+          <div>
+            <h1 class="font-arcade font-black text-xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-neonCyan via-white to-neonMagenta">
+              PIEZO<span class="text-neonYellow">PUNCH</span>
+            </h1>
+            <p class="text-[9px] tracking-widest text-slate-400 font-mono uppercase -mt-1">Network v2.0</p>
+          </div>
+        </div>
+
+        <!-- Right Nav User Info & Sign Out -->
+        <div class="flex items-center space-x-4">
+          <div id="headerUserInfo" class="flex items-center space-x-3 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
+            <div id="headerAvatar" class="w-7 h-7 rounded-lg bg-neonMagenta text-white font-bold font-arcade text-xs flex items-center justify-center shadow-glowMagenta">
+              U
+            </div>
+            <div class="text-left hidden sm:block">
+              <p id="headerUsername" class="text-xs font-bold text-slate-100 font-mono">Player</p>
+              <p id="headerScore" class="text-[10px] text-neonCyan font-mono">BEST: 0 N</p>
+            </div>
+          </div>
+
+          <button onclick="handleSignOut()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 hover:text-white px-3 py-1.5 rounded-xl text-xs font-mono transition flex items-center space-x-1.5">
+            <i class="fa-solid fa-right-from-bracket text-neonMagenta"></i>
+            <span class="hidden sm:inline">Sign Out</span>
+          </button>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+      
+      <!-- MAIN NAVIGATION TABS HUB -->
+      <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-8 bg-slate-900/80 p-1.5 rounded-2xl border border-slate-800/80">
+        <button onclick="switchNavTab('punch')" id="navBtn-punch" class="nav-tab active flex items-center justify-center space-x-2 py-3 px-2 rounded-xl font-arcade text-xs tracking-wider uppercase transition bg-slate-800 text-neonCyan border border-neonCyan/50 shadow-glowCyan">
+          <i class="fa-solid fa-bolt text-sm"></i>
+          <span class="font-bold">PUNCH</span>
+        </button>
+
+        <button onclick="switchNavTab('leaderboard')" id="navBtn-leaderboard" class="nav-tab flex items-center justify-center space-x-2 py-3 px-2 rounded-xl font-arcade text-xs tracking-wider uppercase transition bg-transparent text-slate-400 hover:text-white hover:bg-slate-800/50">
+          <i class="fa-solid fa-trophy text-sm"></i>
+          <span class="font-bold">LEADERBOARD</span>
+        </button>
+
+        <button onclick="switchNavTab('profile')" id="navBtn-profile" class="nav-tab flex items-center justify-center space-x-2 py-3 px-2 rounded-xl font-arcade text-xs tracking-wider uppercase transition bg-transparent text-slate-400 hover:text-white hover:bg-slate-800/50">
+          <i class="fa-solid fa-user-ninja text-sm"></i>
+          <span class="font-bold">PROFILE</span>
+        </button>
+      </div>
+
+      <!-- SECTION 1: PUNCH (GAME MODES) -->
+      <div id="sec-punch" class="tab-section space-y-6">
+        
+        <!-- Mode Sub-Selector -->
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div>
+            <h2 class="font-arcade text-lg font-bold text-white uppercase tracking-wider flex items-center">
+              <i class="fa-solid fa-gamepad text-neonCyan mr-2"></i> Select Game Mode
+            </h2>
+            <p class="text-xs text-slate-400 font-mono mt-0.5">Connect ESP32 or test strikes interactively</p>
+          </div>
+
+          <div class="flex space-x-2 bg-slate-900 p-1 rounded-xl border border-slate-800">
+            <button onclick="switchPunchSubMode('normal')" id="subBtn-normal" class="sub-mode-btn px-3 py-1.5 rounded-lg text-xs font-arcade font-bold bg-neonCyan/20 text-neonCyan border border-neonCyan/40">
+              Normal Mode
+            </button>
+            <button onclick="switchPunchSubMode('bot')" id="subBtn-bot" class="sub-mode-btn px-3 py-1.5 rounded-lg text-xs font-arcade font-bold bg-transparent text-slate-400 hover:text-white">
+              Bot Battle
+            </button>
+            <button onclick="switchPunchSubMode('duo')" id="subBtn-duo" class="sub-mode-btn px-3 py-1.5 rounded-lg text-xs font-arcade font-bold bg-transparent text-slate-400 hover:text-white">
+              Duo Mode
+            </button>
+          </div>
+        </div>
+
+        <!-- GAME MODE 1: NORMAL MODE -->
+        <div id="mode-normal" class="punch-sub-view grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Punch Gauge & Simulator (7 Cols) -->
+          <div class="lg:col-span-7 glass-panel rounded-3xl p-6 border border-slate-800 flex flex-col items-center justify-between relative min-h-[420px]">
+            <div class="w-full flex justify-between items-center text-xs font-mono text-slate-400 mb-2">
+              <span><i class="fa-solid fa-wifi text-emerald-400 mr-1"></i> ESP32 ADC FEED</span>
+              <span id="strikeCountDisplay" class="text-neonYellow">STRIKES: 0</span>
+            </div>
+
+            <!-- Gauge Circle -->
+            <div class="relative w-64 h-64 my-4 flex items-center justify-center">
+              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                <circle class="gauge-bg" cx="50" cy="50" r="42" stroke-width="8" fill="none" />
+                <circle id="normalGaugeCircle" class="gauge-fill" cx="50" cy="50" r="42" stroke-width="8" fill="none"
+                        stroke="url(#normalGaugeGrad)" stroke-dasharray="263.89" stroke-dashoffset="263.89" stroke-linecap="round" />
+                <defs>
+                  <linearGradient id="normalGaugeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#00f3ff" />
+                    <stop offset="50%" stop-color="#ffea00" />
+                    <stop offset="100%" stop-color="#ff007f" />
+                  </linearGradient>
+                </defs>
+              </svg>
+
+              <div class="absolute text-center">
+                <p class="text-[10px] font-mono text-slate-400 uppercase tracking-widest">IMPACT FORCE</p>
+                <div id="normalForceNum" class="text-5xl font-arcade font-black text-white my-1">0</div>
+                <p id="normalPsiNum" class="text-xs font-mono text-neonCyan">0.0 PSI</p>
+              </div>
+            </div>
+
+            <!-- Interactive Strike Trigger Simulator -->
+            <div class="w-full bg-slate-900/90 p-4 rounded-2xl border border-slate-800/80 text-center">
+              <p class="text-xs font-mono text-slate-400 mb-3">Simulate Hardware ESP32 Piezo Strikes:</p>
+              <div class="grid grid-cols-3 gap-2">
+                <button onclick="triggerStrike(800)" class="py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-arcade border border-slate-700 transition">
+                  🥊 Jab (800N)
+                </button>
+                <button onclick="triggerStrike(2400)" class="py-2.5 bg-slate-800 hover:bg-slate-700 text-neonYellow rounded-xl text-xs font-arcade border border-slate-700 transition">
+                  💥 Cross (2400N)
+                </button>
+                <button onclick="triggerStrike(4500)" class="py-2.5 bg-gradient-to-r from-neonMagenta to-purple-600 text-white rounded-xl text-xs font-arcade shadow-glowMagenta transition font-bold">
+                  ⚡ MAX KO (4500N)
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Stats & Rating Side Panel (5 Cols) -->
+          <div class="lg:col-span-5 space-y-4">
+            
+            <div class="glass-panel p-5 rounded-3xl border border-slate-800">
+              <p class="text-xs font-mono text-slate-400 uppercase">Current Strike Tier</p>
+              <h3 id="normalTierText" class="text-2xl font-arcade font-black text-slate-300 mt-1">NO IMPACT</h3>
+              <p id="normalTierDesc" class="text-xs text-slate-400 mt-1">Hit the pad or click a simulation button to measure force!</p>
+            </div>
+
+            <div class="glass-panel p-5 rounded-3xl border border-slate-800">
+              <p class="text-xs font-mono text-slate-400 uppercase">Personal Session Peak</p>
+              <div class="flex items-baseline justify-between mt-1">
+                <h3 id="normalPeakNum" class="text-3xl font-arcade font-black text-neonCyan">0 <span class="text-xs font-normal text-slate-400">N</span></h3>
+                <span id="normalPeakPsi" class="text-xs font-mono text-slate-400">0.0 PSI</span>
+              </div>
+            </div>
+
+            <div class="glass-panel p-5 rounded-3xl border border-slate-800">
+              <h4 class="font-arcade text-xs font-bold text-slate-300 uppercase mb-3">Piezo Pad Quadrant Hit</h4>
+              <div class="grid grid-cols-2 gap-2 aspect-square max-w-[180px] mx-auto text-center font-mono">
+                <div id="q-TL" class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs text-slate-400">TL<br><span class="text-[10px] text-neonCyan">0N</span></div>
+                <div id="q-TR" class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs text-slate-400">TR<br><span class="text-[10px] text-neonCyan">0N</span></div>
+                <div id="q-BL" class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs text-slate-400">BL<br><span class="text-[10px] text-neonCyan">0N</span></div>
+                <div id="q-BR" class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs text-slate-400">BR<br><span class="text-[10px] text-neonCyan">0N</span></div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- GAME MODE 2: BOT BATTLE MODE -->
+        <div id="mode-bot" class="punch-sub-view hidden space-y-6">
+          <div class="glass-panel rounded-3xl p-6 border border-slate-800">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+              <div>
+                <h3 class="font-arcade text-lg font-bold text-neonMagenta uppercase">
+                  <i class="fa-solid fa-robot mr-2"></i> Boss Fight Arena
+                </h3>
+                <p class="text-xs text-slate-400 font-mono">Deplete the AI opponent's HP using your real strike force!</p>
+              </div>
+
+              <!-- Bot Selector -->
+              <div class="flex space-x-2">
+                <button onclick="selectBot(0)" id="botSelect0" class="bot-select-btn active px-3 py-1.5 rounded-xl text-xs font-arcade bg-neonMagenta/20 text-neonMagenta border border-neonMagenta/40">
+                  Steel Golem (10k HP)
+                </button>
+                <button onclick="selectBot(1)" id="botSelect1" class="bot-select-btn px-3 py-1.5 rounded-xl text-xs font-arcade bg-slate-900 text-slate-400 border border-slate-800">
+                  Cyber Brawler (25k HP)
+                </button>
+              </div>
+            </div>
+
+            <!-- Bot Battle Canvas / Layout -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              <!-- Bot Visual Card -->
+              <div class="md:col-span-5 bg-slate-900/90 rounded-2xl p-6 text-center border border-slate-800 relative overflow-hidden">
+                <div id="botAvatar" class="w-24 h-24 rounded-3xl bg-gradient-to-tr from-purple-600 to-neonMagenta p-0.5 mx-auto mb-4 shadow-glowMagenta flex items-center justify-center text-4xl text-white">
+                  <i class="fa-solid fa-robot"></i>
+                </div>
+                <h4 id="botName" class="font-arcade font-bold text-xl text-white">Steel Golem</h4>
+                <p id="botClass" class="text-xs font-mono text-neonMagenta mt-1">CLASS 1 AI BOSS</p>
+
+                <!-- Health Bar -->
+                <div class="mt-4">
+                  <div class="flex justify-between text-xs font-mono mb-1">
+                    <span class="text-slate-400">BOSS HP</span>
+                    <span id="botHpText" class="text-neonYellow font-bold">10000 / 10000</span>
+                  </div>
+                  <div class="w-full bg-slate-950 rounded-full h-3 overflow-hidden border border-slate-800">
+                    <div id="botHpBar" class="bg-gradient-to-r from-neonYellow to-neonMagenta h-full transition-all duration-300" style="width: 100%"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Battle Strike Action Box -->
+              <div class="md:col-span-7 space-y-4">
+                <div id="battleLog" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 font-mono text-xs text-slate-300 h-36 overflow-y-auto space-y-1">
+                  <p class="text-neonCyan">> Arena initialized. Select strike intensity below to attack!</p>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+                  <button onclick="attackBot(1000)" class="py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-arcade border border-slate-700 transition">
+                    Light Strike (1k)
+                  </button>
+                  <button onclick="attackBot(2500)" class="py-3 bg-slate-800 hover:bg-slate-700 text-neonYellow rounded-xl text-xs font-arcade border border-slate-700 transition">
+                    Heavy Strike (2.5k)
+                  </button>
+                  <button onclick="attackBot(5000)" class="py-3 bg-neonMagenta hover:bg-magenta-600 text-white rounded-xl text-xs font-arcade shadow-glowMagenta transition font-bold">
+                    🔥 KO ULTRA (5k)
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- GAME MODE 3: DUO MODE (COMING SOON) -->
+        <div id="mode-duo" class="punch-sub-view hidden">
+          <div class="glass-panel rounded-3xl p-12 border border-slate-800 text-center max-w-xl mx-auto my-8">
+            <div class="w-16 h-16 rounded-2xl bg-neonYellow/10 border border-neonYellow/30 text-neonYellow flex items-center justify-center text-2xl mx-auto mb-4 shadow-glowYellow">
+              <i class="fa-solid fa-users-slash"></i>
+            </div>
+            <span class="inline-block px-3 py-1 bg-neonYellow/20 text-neonYellow font-arcade text-xs font-bold rounded-full border border-neonYellow/40 mb-3">
+              COMING SOON
+            </span>
+            <h3 class="font-arcade text-2xl font-black text-white">2-PLAYER DUO BATTLE</h3>
+            <p class="text-xs text-slate-400 font-mono mt-2 leading-relaxed">
+              Head-to-head split screen battle mode is currently under development for network v2.1. Stay tuned!
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SECTION 2: LEADERBOARD -->
+      <div id="sec-leaderboard" class="tab-section hidden space-y-6">
+        
+        <div class="glass-panel rounded-3xl p-6 border border-slate-800">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 class="font-arcade text-xl font-bold text-white uppercase flex items-center">
+                <i class="fa-solid fa-trophy text-neonYellow mr-2"></i> Global Network Standings
+              </h2>
+              <p class="text-xs text-slate-400 font-mono mt-0.5">Rankings based on highest single strike force recorded</p>
+            </div>
+          </div>
+
+          <!-- TOP 3 PODIUM DISPLAY -->
+          <div id="podiumContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <!-- Dynamically injected Podium Cards (Gold, Silver, Bronze) -->
+          </div>
+
+          <!-- FULL RANKINGS TABLE -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-[11px] font-mono text-slate-400 uppercase tracking-wider">
+                  <th class="py-3 px-4">Rank</th>
+                  <th class="py-3 px-4">Fighter</th>
+                  <th class="py-3 px-4">Peak Strike</th>
+                  <th class="py-3 px-4">PSI</th>
+                  <th class="py-3 px-4">Recorded Date</th>
+                </tr>
+              </thead>
+              <tbody id="leaderboardRows" class="divide-y divide-slate-800/60 font-mono text-sm">
+                <!-- Rows injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- SECTION 3: PROFILE -->
+      <div id="sec-profile" class="tab-section hidden space-y-6">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Profile Information Card (5 Cols) -->
+          <div class="lg:col-span-5 glass-panel rounded-3xl p-6 border border-slate-800 space-y-6">
+            <div class="text-center">
+              <div id="profileBigAvatar" class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-neonCyan to-blue-600 p-0.5 mx-auto mb-3 shadow-glowCyan flex items-center justify-center text-3xl font-arcade font-bold text-slate-950">
+                P
+              </div>
+              <h3 id="profileUsername" class="font-arcade text-xl font-bold text-white">Player</h3>
+              <p id="profileRankBadge" class="text-xs font-mono text-neonCyan mt-0.5">FIGHTER RANK: #1</p>
+            </div>
+
+            <!-- Credentials Box (Shows Auto-Generated Password) -->
+            <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 font-mono space-y-3">
+              <div class="flex justify-between items-center text-xs">
+                <span class="text-slate-400">Username:</span>
+                <span id="profileDisplayUser" class="text-slate-200 font-bold">Player</span>
+              </div>
+              <div class="flex justify-between items-center text-xs">
+                <span class="text-slate-400">Password / Security Key:</span>
+                <span id="profileDisplayPass" class="text-neonYellow font-bold bg-slate-950 px-2 py-1 rounded border border-slate-800">PUNCH-0000</span>
+              </div>
+            </div>
+
+            <!-- Dynamic Motivational Encouragement Box -->
+            <div class="glass-panel p-5 rounded-2xl border border-neonCyan/30 relative overflow-hidden">
+              <div class="flex items-center space-x-2 text-neonCyan mb-2 font-arcade text-xs font-bold">
+                <i class="fa-solid fa-comment-dots text-sm"></i>
+                <span>COACH AI MOTIVATION</span>
+              </div>
+              <p id="motivationText" class="text-xs font-mono text-slate-300 leading-relaxed italic">
+                "You're amazing! Keep up the good work! Every strike brings you closer to the champion rank!"
+              </p>
+            </div>
+          </div>
+
+          <!-- Gameplay History & Stats (7 Cols) -->
+          <div class="lg:col-span-7 glass-panel rounded-3xl p-6 border border-slate-800">
+            <h3 class="font-arcade text-sm font-bold text-slate-200 uppercase tracking-wider mb-4 flex items-center">
+              <i class="fa-solid fa-clock-rotate-left text-neonMagenta mr-2"></i> Recent Gameplay History Log
+            </h3>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left font-mono text-xs">
+                <thead>
+                  <tr class="border-b border-slate-800 text-slate-400 uppercase text-[10px]">
+                    <th class="py-2 px-3">Mode</th>
+                    <th class="py-2 px-3">Recorded Score</th>
+                    <th class="py-2 px-3">Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody id="profileHistoryRows" class="divide-y divide-slate-800/60 text-slate-300">
+                  <!-- History injected dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-900 py-4 text-center text-xs font-mono text-slate-400">
+      PiezoPunch Network System &copy; 2026. ESP32 Hardware Integration Active.
+    </footer>
+
+  </div>
+
+  <script>
+    // Audio Context Synthesizer
+    let audioCtx = null;
+    function playSound(type) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'hit') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.2);
+          gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.2);
+        } else if (type === 'click') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+          gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.05);
+        }
+      } catch (e) {}
+    }
+
+    // Default pre-loaded accounts for leaderboard
+    const DEFAULT_ACCOUNTS = [
+      { username: 'ChampStrike', password: 'PUNCH-9901', bestScore: 4850, history: [{ mode: 'Normal', score: '4850 N', time: '10 mins ago' }] },
+      { username: 'TitanPunch', password: 'PUNCH-4112', bestScore: 4120, history: [{ mode: 'Normal', score: '4120 N', time: '1 hour ago' }] },
+      { username: 'NeonBrawler', password: 'PUNCH-7730', bestScore: 3450, history: [{ mode: 'Normal', score: '3450 N', time: '3 hours ago' }] },
+    ];
+
+    let users = JSON.parse(localStorage.getItem('piezo_users')) || DEFAULT_ACCOUNTS;
+    let currentUser = JSON.parse(localStorage.getItem('piezo_current_user')) || null;
+
+    // Session states
+    let sessionStrikes = 0;
+    let sessionPeak = 0;
+    let currentBotIdx = 0;
+    const BOTS = [
+      { name: 'Steel Golem', maxHp: 10000, currentHp: 10000, class: 'CLASS 1 AI BOSS' },
+      { name: 'Cyber Brawler', maxHp: 25000, currentHp: 25000, class: 'CLASS 2 ULTRA BOSS' }
+    ];
+
+    const MOTIVATIONAL_QUOTES = [
+      "You're amazing! Keep up the good work! Your power is off the charts!",
+      "Incredible consistency! Champions train every single day!",
+      "Unstoppable force! You're dominating the PiezoPunch leaderboards!",
+      "Great technique! Focus on velocity to break your personal best!",
+      "Awesome strikes! Keep pushing your limits!"
+    ];
+
+    window.onload = function() {
+      if (!currentUser) {
+        document.getElementById('authScreen').classList.remove('hidden');
+      } else {
+        document.getElementById('authScreen').classList.add('hidden');
+        updateHeaderUI();
+        renderLeaderboard();
+        updateProfileUI();
+      }
+    };
+
+    function saveUserData() {
+      localStorage.setItem('piezo_users', JSON.stringify(users));
+      if (currentUser) {
+        localStorage.setItem('piezo_current_user', JSON.stringify(currentUser));
+      }
+    }
+
+    function switchAuthTab(tab) {
+      playSound('click');
+      const isLogin = tab === 'login';
+      document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
+      document.getElementById('signupForm').classList.toggle('hidden', isLogin);
+
+      document.getElementById('tabLoginBtn').className = isLogin 
+        ? 'w-1/2 py-2.5 rounded-lg text-neonCyan bg-slate-800 font-bold transition'
+        : 'w-1/2 py-2.5 rounded-lg text-slate-400 hover:text-white transition';
+
+      document.getElementById('tabSignupBtn').className = !isLogin 
+        ? 'w-1/2 py-2.5 rounded-lg text-neonMagenta bg-slate-800 font-bold transition'
+        : 'w-1/2 py-2.5 rounded-lg text-slate-400 hover:text-white transition';
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      playSound('click');
+      const u = document.getElementById('loginUsername').value.trim();
+      const p = document.getElementById('loginPassword').value.trim();
+
+      const found = users.find(account => account.username.toLowerCase() === u.toLowerCase() && account.password === p);
+
+      if (found) {
+        currentUser = found;
+        saveUserData();
+        document.getElementById('authScreen').classList.add('hidden');
+        document.getElementById('loginError').classList.add('hidden');
+        updateHeaderUI();
+        renderLeaderboard();
+        updateProfileUI();
+      } else {
+        document.getElementById('loginError').classList.remove('hidden');
+      }
+    }
+
+    function handleSignup(e) {
+      e.preventDefault();
+      playSound('click');
+      const u = document.getElementById('signupUsername').value.trim();
+      if (!u) return;
+
+      const randomPass = 'PUNCH-' + Math.floor(1000 + Math.random() * 9000);
+      const newUser = {
+        username: u,
+        password: randomPass,
+        bestScore: 0,
+        history: []
+      };
+
+      users.push(newUser);
+      currentUser = newUser;
+      saveUserData();
+
+      // Show Generated Password Modal
+      document.getElementById('generatedPassDisplay').innerText = randomPass;
+      document.getElementById('passModal').classList.remove('hidden');
+    }
+
+    function closePassModal() {
+      playSound('click');
+      document.getElementById('passModal').classList.add('hidden');
+      document.getElementById('authScreen').classList.add('hidden');
+      updateHeaderUI();
+      renderLeaderboard();
+      updateProfileUI();
+    }
+
+    function handleSignOut() {
+      playSound('click');
+      currentUser = null;
+      localStorage.removeItem('piezo_current_user');
+      document.getElementById('authScreen').classList.remove('hidden');
+    }
+
+    function switchNavTab(tab) {
+      playSound('click');
+      document.querySelectorAll('.tab-section').forEach(sec => sec.classList.add('hidden'));
+      document.querySelectorAll('.nav-tab').forEach(btn => {
+        btn.classList.remove('bg-slate-800', 'text-neonCyan', 'border-neonCyan/50', 'shadow-glowCyan');
+        btn.classList.add('bg-transparent', 'text-slate-400');
+      });
+
+      document.getElementById(`sec-${tab}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`navBtn-${tab}`);
+      activeBtn.classList.remove('bg-transparent', 'text-slate-400');
+      activeBtn.classList.add('bg-slate-800', 'text-neonCyan', 'border-neonCyan/50', 'shadow-glowCyan');
+
+      if (tab === 'leaderboard') renderLeaderboard();
+      if (tab === 'profile') updateProfileUI();
+    }
+
+    function switchPunchSubMode(mode) {
+      playSound('click');
+      document.querySelectorAll('.punch-sub-view').forEach(v => v.classList.add('hidden'));
+      document.querySelectorAll('.sub-mode-btn').forEach(b => {
+        b.classList.remove('bg-neonCyan/20', 'text-neonCyan', 'border-neonCyan/40');
+        b.classList.add('bg-transparent', 'text-slate-400');
+      });
+
+      document.getElementById(`mode-${mode}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`subBtn-${mode}`);
+      activeBtn.classList.remove('bg-transparent', 'text-slate-400');
+      activeBtn.classList.add('bg-neonCyan/20', 'text-neonCyan', 'border-neonCyan/40');
+    }
+
+    function triggerStrike(force) {
+      playSound('hit');
+      sessionStrikes++;
+      if (force > sessionPeak) sessionPeak = force;
+
+      const psi = (force * 0.0203).toFixed(1);
+
+      // Gauge Update
+      document.getElementById('normalForceNum').innerText = force;
+      document.getElementById('normalPsiNum').innerText = `${psi} PSI`;
+      document.getElementById('strikeCountDisplay').innerText = `STRIKES: ${sessionStrikes}`;
+
+      const circle = document.getElementById('normalGaugeCircle');
+      const maxOffset = 263.89;
+      const progress = Math.min(1, force / 5000);
+      circle.style.strokeDashoffset = maxOffset - (progress * maxOffset);
+
+      // Tier logic
+      let tier = 'LIGHT JAB';
+      if (force > 1500) tier = 'MEDIUM IMPACT';
+      if (force > 3000) tier = 'HEAVY IMPACT';
+      if (force > 4000) tier = '⚡ MAX KO STRIKE';
+
+      document.getElementById('normalTierText').innerText = tier;
+      document.getElementById('normalPeakNum').innerHTML = `${sessionPeak} <span class="text-xs font-normal text-slate-400">N</span>`;
+      document.getElementById('normalPeakPsi').innerText = `${(sessionPeak * 0.0203).toFixed(1)} PSI`;
+
+      // Quadrant simulation
+      const quadVal = Math.round(force / 4);
+      ['TL', 'TR', 'BL', 'BR'].forEach(q => {
+        document.getElementById(`q-${q}`).innerHTML = `${q}<br><span class="text-[10px] text-neonCyan">${quadVal}N</span>`;
+      });
+
+      // Save user highscore if higher
+      if (currentUser && force > currentUser.bestScore) {
+        currentUser.bestScore = force;
+        const now = new Date();
+        currentUser.history.unshift({
+          mode: 'Normal Mode',
+          score: `${force} N`,
+          time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+        const idx = users.findIndex(u => u.username === currentUser.username);
+        if (idx >= 0) users[idx] = currentUser;
+        saveUserData();
+        updateHeaderUI();
+      }
+    }
+
+    function selectBot(idx) {
+      playSound('click');
+      currentBotIdx = idx;
+      document.querySelectorAll('.bot-select-btn').forEach((b, i) => {
+        if (i === idx) {
+          b.className = 'bot-select-btn active px-3 py-1.5 rounded-xl text-xs font-arcade bg-neonMagenta/20 text-neonMagenta border border-neonMagenta/40';
+        } else {
+          b.className = 'bot-select-btn px-3 py-1.5 rounded-xl text-xs font-arcade bg-slate-900 text-slate-400 border border-slate-800';
+        }
+      });
+
+      const bot = BOTS[currentBotIdx];
+      document.getElementById('botName').innerText = bot.name;
+      document.getElementById('botClass').innerText = bot.class;
+      updateBotHpUI();
+    }
+
+    function attackBot(force) {
+      playSound('hit');
+      const bot = BOTS[currentBotIdx];
+      bot.currentHp = Math.max(0, bot.currentHp - force);
+      updateBotHpUI();
+
+      const log = document.getElementById('battleLog');
+      const p = document.createElement('p');
+      p.className = 'text-neonYellow';
+      p.innerText = `> STRIKE HIT! Landed ${force} N damage on ${bot.name}!`;
+      log.appendChild(p);
+      log.scrollTop = log.scrollHeight;
+
+      if (bot.currentHp === 0) {
+        const winP = document.createElement('p');
+        winP.className = 'text-neonCyan font-bold';
+        winP.innerText = `> 🏆 VICTORY! You defeated ${bot.name}! HP Resetting...`;
+        log.appendChild(winP);
+        setTimeout(() => {
+          bot.currentHp = bot.maxHp;
+          updateBotHpUI();
+        }, 2000);
+      }
+    }
+
+    function updateBotHpUI() {
+      const bot = BOTS[currentBotIdx];
+      document.getElementById('botHpText').innerText = `${bot.currentHp} / ${bot.maxHp}`;
+      const pct = (bot.currentHp / bot.maxHp) * 100;
+      document.getElementById('botHpBar').style.width = `${pct}%`;
+    }
+
+    function renderLeaderboard() {
+      const sorted = [...users].sort((a, b) => b.bestScore - a.bestScore);
+      const podium = document.getElementById('podiumContainer');
+      const rows = document.getElementById('leaderboardRows');
+
+      podium.innerHTML = '';
+      rows.innerHTML = '';
+
+      // Podium Top 3
+      const medals = [
+        { rank: '🥇 1st Place', color: 'border-amber-500/80 shadow-glowGold text-amber-400' },
+        { rank: '🥈 2nd Place', color: 'border-slate-300/80 text-slate-200' },
+        { rank: '🥉 3rd Place', color: 'border-amber-700/80 text-amber-600' }
+      ];
+
+      for (let i = 0; i < Math.min(3, sorted.length); i++) {
+        const p = sorted[i];
+        const card = document.createElement('div');
+        card.className = `glass-panel p-5 rounded-3xl border ${medals[i].color} text-center`;
+        card.innerHTML = `
+          <span class="text-xs font-arcade font-bold uppercase tracking-wider">${medals[i].rank}</span>
+          <h3 class="font-arcade text-lg font-bold mt-2 text-white">${p.username}</h3>
+          <p class="text-2xl font-arcade font-black text-neonCyan mt-1">${p.bestScore} N</p>
+          <p class="text-xs font-mono text-slate-400 mt-1">${(p.bestScore * 0.0203).toFixed(1)} PSI</p>
+        `;
+        podium.appendChild(card);
+      }
+
+      // Remaining Rows
+      sorted.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        const isUser = currentUser && item.username === currentUser.username;
+        tr.className = isUser ? 'bg-neonCyan/10 hover:bg-neonCyan/15 font-bold' : 'hover:bg-slate-900/60';
+        tr.innerHTML = `
+          <td class="py-3.5 px-4 font-bold text-slate-300">#${index + 1}</td>
+          <td class="py-3.5 px-4 ${isUser ? 'text-neonCyan' : 'text-slate-200'}">
+            ${item.username} ${isUser ? '<span class="text-[10px] text-neonYellow ml-1">(YOU)</span>' : ''}
+          </td>
+          <td class="py-3.5 px-4 text-neonCyan font-bold">${item.bestScore} N</td>
+          <td class="py-3.5 px-4 text-slate-400">${(item.bestScore * 0.0203).toFixed(1)}</td>
+          <td class="py-3.5 px-4 text-slate-400">${item.history[0]?.time || 'Today'}</td>
+        `;
+        rows.appendChild(tr);
+      });
+    }
+
+    function updateHeaderUI() {
+      if (!currentUser) return;
+      document.getElementById('headerUsername').innerText = currentUser.username;
+      document.getElementById('headerScore').innerText = `BEST: ${currentUser.bestScore} N`;
+      document.getElementById('headerAvatar').innerText = currentUser.username.charAt(0).toUpperCase();
+    }
+
+    function updateProfileUI() {
+      if (!currentUser) return;
+      document.getElementById('profileUsername').innerText = currentUser.username;
+      document.getElementById('profileDisplayUser').innerText = currentUser.username;
+      document.getElementById('profileDisplayPass').innerText = currentUser.password;
+      document.getElementById('profileBigAvatar').innerText = currentUser.username.charAt(0).toUpperCase();
+
+      // Calculate Rank
+      const sorted = [...users].sort((a, b) => b.bestScore - a.bestScore);
+      const rank = sorted.findIndex(u => u.username === currentUser.username) + 1;
+      document.getElementById('profileRankBadge').innerText = `NETWORK RANK: #${rank}`;
+
+      // Pick Motivational Quote
+      const quoteIdx = Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length);
+      document.getElementById('motivationText').innerText = `"${MOTIVATIONAL_QUOTES[quoteIdx]}"`;
+
+      // Render History
+      const hRows = document.getElementById('profileHistoryRows');
+      hRows.innerHTML = '';
+      if (!currentUser.history || currentUser.history.length === 0) {
+        hRows.innerHTML = '<tr><td colspan="3" class="py-3 px-3 text-slate-500 italic">No strikes recorded yet. Head over to PUNCH to begin!</td></tr>';
+      } else {
+        currentUser.history.slice(0, 5).forEach(h => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="py-2.5 px-3 text-slate-300 font-bold">${h.mode}</td>
+            <td class="py-2.5 px-3 text-neonCyan font-bold">${h.score}</td>
+            <td class="py-2.5 px-3 text-slate-400">${h.time}</td>
+          `;
+          hRows.appendChild(tr);
+        });
+      }
+    }
+  </script>
+</body>
+</html>
