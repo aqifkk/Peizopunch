@@ -171,7 +171,7 @@
         <div class="flex items-center space-x-4">
           <div class="flex items-center space-x-1.5 px-3 py-1 rounded-xl bg-slate-900 border border-slate-800 text-[11px] font-mono">
             <span id="mqttDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-            <span id="mqttText" class="text-slate-300">Connecting MQTT...</span>
+            <span id="mqttText" class="text-slate-300">ESP32 Offline</span>
           </div>
 
           <div class="flex items-center space-x-3 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
@@ -360,7 +360,7 @@
 
       </div>
 
-      <!-- SECTION: LEADERBOARD (NO BOTS, ONLY REAL SIGNED-UP USERS) -->
+      <!-- SECTION: LEADERBOARD -->
       <div id="sec-leaderboard" class="tab-section hidden space-y-6">
         <div class="glass-panel rounded-3xl p-6 border border-slate-800">
           <div class="flex items-center justify-between mb-6">
@@ -458,6 +458,9 @@
     let currentBossPad = -1;
     let bossRegenInterval = null;
 
+    // MQTT & ESP32 Heartbeat State
+    let lastEspMessageTime = 0;
+
     window.addEventListener('DOMContentLoaded', () => {
       if (currentUser) {
         document.getElementById('authScreen').classList.add('hidden');
@@ -469,7 +472,7 @@
       initMQTT();
     });
 
-    // --- MQTT ESP32 LINK ---
+    // --- MQTT ESP32 LINK WITH HEARTBEAT ---
     function initMQTT() {
       const mqttDot = document.getElementById('mqttDot');
       const mqttText = document.getElementById('mqttText');
@@ -478,24 +481,26 @@
       const topic = 'aqifkk/peizopunch/force';
 
       client.on('connect', () => {
-        mqttDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
-        mqttText.innerText = 'ESP32 Connected';
+        mqttText.innerText = 'Waiting for ESP32...';
         client.subscribe(topic);
       });
 
       client.on('message', (incomingTopic, payload) => {
         if (incomingTopic === topic) {
-          // Expected payload format from ESP32: "pad:0,val:250" or just reading value
+          // Heartbeat check update
+          lastEspMessageTime = Date.now();
+          mqttDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+          mqttText.innerText = 'ESP32 Online';
+
           try {
             const data = JSON.parse(payload.toString());
             if (data.val > 140) {
               handlePiezoInput(data.pad);
             }
           } catch(e) {
-            // Fallback if raw number sent
             const val = parseInt(payload.toString());
             if (!isNaN(val) && val > 140) {
-              handlePiezoInput(0); // Default to pad 0 if raw
+              handlePiezoInput(0);
             }
           }
         }
@@ -503,8 +508,16 @@
 
       client.on('error', () => {
         mqttDot.className = 'w-2 h-2 rounded-full bg-red-500';
-        mqttText.innerText = 'MQTT Disconnected';
+        mqttText.innerText = 'Cloud Error';
       });
+
+      // Check every 2 seconds if ESP32 stopped sending data
+      setInterval(() => {
+        if (lastEspMessageTime === 0 || (Date.now() - lastEspMessageTime > 5000)) {
+          mqttDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+          mqttText.innerText = 'ESP32 Offline';
+        }
+      }, 2000);
     }
 
     // --- AUTHENTICATION (NO BOTS) ---
@@ -643,7 +656,6 @@
 
       document.getElementById('targetPadDisplay').innerText = 'PAD ' + currentTargetPad;
 
-      // Update Relay LED Strips UI representation (Active LOW simulated as ON)
       for (let i = 0; i < 4; i++) {
         const relayEl = document.getElementById('relay-' + i);
         if (i === currentTargetPad) {
@@ -718,10 +730,9 @@
       logBossMessage("Boss Fight Started! Hit the highlighted pad quickly!");
       pickNewBossPad();
 
-      // Boss regenerates health every 2 seconds if you don't hit fast enough
       bossRegenInterval = setInterval(() => {
         if (isBossPlaying) {
-          bossHp = Math.min(100, bossHp + 5); // Regenerate 5 HP
+          bossHp = Math.min(100, bossHp + 5);
           updateBossUI();
           logBossMessage("Boss regenerates +5 HP! Strike fast!");
         }
@@ -783,7 +794,7 @@
       }
     }
 
-    // --- LEADERBOARD & STORAGE (NO BOTS) ---
+    // --- LEADERBOARD & STORAGE ---
     function updateUsersStorage() {
       const idx = users.findIndex(x => x.username.toLowerCase() === currentUser.username.toLowerCase());
       if (idx !== -1) {
