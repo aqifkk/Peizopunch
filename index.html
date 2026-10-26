@@ -33,7 +33,6 @@
             glowCyan: '0 0 25px rgba(0, 243, 255, 0.35)',
             glowMagenta: '0 0 25px rgba(255, 0, 127, 0.35)',
             glowYellow: '0 0 25px rgba(255, 234, 0, 0.35)',
-            glowGold: '0 0 30px rgba(245, 158, 11, 0.4)',
           }
         }
       }
@@ -74,7 +73,6 @@
     .boss-hurt { animation: bossMad 0.4s ease-in-out; }
     .boss-defeat { animation: bossDie 1.2s forwards ease-in-out; }
 
-    /* Background Neon Grid */
     .bg-grid {
       background-size: 40px 40px;
       background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
@@ -108,7 +106,7 @@
           <h1 class="font-arcade font-black text-2xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-neonCyan via-white to-neonMagenta">
             PIEZOPUNCH NETWORK
           </h1>
-          <p class="text-xs font-mono text-slate-400 mt-2 uppercase tracking-widest">ESP32 Arcade System v2.0</p>
+          <p class="text-xs font-mono text-slate-400 mt-2 uppercase tracking-widest">ESP32 Arcade System v2.1</p>
         </div>
 
         <div class="flex bg-slate-900/90 p-1 rounded-xl mb-6 border border-slate-800 text-xs font-arcade">
@@ -141,24 +139,29 @@
 
     <!-- FULL-SCREEN BOSS BATTLE ARENA MODAL -->
     <div id="fullScreenBossArena" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-2xl flex flex-col justify-between p-6 hidden">
-      <!-- Top Health Bars -->
-      <div class="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-        <div class="glass-panel p-4 rounded-2xl border border-neonMagenta/50 shadow-glowMagenta">
-          <div class="flex justify-between text-xs font-mono mb-1">
-            <span class="text-neonMagenta font-bold uppercase"><i class="fa-solid fa-dragon mr-1"></i> BOSS: SHADOW TITAN</span>
+      <!-- Top Health Bars & Stage Indicator -->
+      <div class="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+        <div class="glass-panel p-3 rounded-2xl border border-neonMagenta/50 shadow-glowMagenta">
+          <div class="flex justify-between text-[11px] font-mono mb-1">
+            <span class="text-neonMagenta font-bold uppercase" id="bossNameTitle">BOSS: STAGE 1</span>
             <span id="bossArenaHpText" class="text-neonYellow font-bold">100 / 100 HP</span>
           </div>
-          <div class="w-full bg-slate-900 rounded-full h-4 overflow-hidden border border-slate-800">
+          <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-800">
             <div id="bossArenaHpBar" class="bg-gradient-to-r from-neonYellow to-neonMagenta h-full transition-all duration-200" style="width: 100%"></div>
           </div>
         </div>
 
-        <div class="glass-panel p-4 rounded-2xl border border-neonCyan/50 shadow-glowCyan">
-          <div class="flex justify-between text-xs font-mono mb-1">
+        <div class="glass-panel p-3 rounded-2xl border border-neonYellow/50 text-center flex flex-col justify-center">
+          <span class="text-[10px] font-mono text-slate-400 uppercase">CURRENT STAGE</span>
+          <span id="currentStageDisplay" class="font-arcade font-black text-neonYellow text-base">STAGE 1 / 3</span>
+        </div>
+
+        <div class="glass-panel p-3 rounded-2xl border border-neonCyan/50 shadow-glowCyan">
+          <div class="flex justify-between text-[11px] font-mono mb-1">
             <span class="text-neonCyan font-bold uppercase"><i class="fa-solid fa-shield-halved mr-1"></i> PLAYER HP</span>
             <span id="playerArenaHpText" class="text-emerald-400 font-bold">100 / 100 HP</span>
           </div>
-          <div class="w-full bg-slate-900 rounded-full h-4 overflow-hidden border border-slate-800">
+          <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-800">
             <div id="playerArenaHpBar" class="bg-gradient-to-r from-emerald-400 to-neonCyan h-full transition-all duration-200" style="width: 100%"></div>
           </div>
         </div>
@@ -167,18 +170,13 @@
       <!-- Center 2D Animated Boss Monster -->
       <div class="flex-1 flex flex-col items-center justify-center relative my-2">
         <div class="relative flex flex-col items-center">
-          <!-- SVG 2D Animated Monster Avatar -->
           <div id="bossMonsterSvgBox" class="w-56 h-56 flex items-center justify-center boss-idle filter drop-shadow-[0_0_30px_rgba(255,0,127,0.6)]">
             <svg viewBox="0 0 200 200" class="w-full h-full">
-              <!-- Body -->
               <ellipse cx="100" cy="110" rx="55" ry="50" fill="#1e1b4b" stroke="#ff007f" stroke-width="4"/>
-              <!-- Glowing Core Eye -->
               <circle cx="100" cy="95" r="18" fill="#00f3ff" class="animate-pulse"/>
               <circle cx="100" cy="95" r="8" fill="#ffea00"/>
-              <!-- Horns -->
               <polygon points="65,70 45,30 75,55" fill="#ff007f"/>
               <polygon points="135,70 155,30 125,55" fill="#ff007f"/>
-              <!-- Angry Mouth / Teeth -->
               <path d="M 75 130 Q 100 150 125 130 Z" fill="#ffea00"/>
               <line x1="85" y1="130" x2="85" y2="142" stroke="#1e1b4b" stroke-width="3"/>
               <line x1="100" y1="130" x2="100" y2="145" stroke="#1e1b4b" stroke-width="3"/>
@@ -325,8 +323,8 @@
               <i class="fa-solid fa-dragon"></i>
             </div>
             <div>
-              <h3 class="font-arcade text-2xl font-black text-white">SHADOW TITAN BOSS ARENA</h3>
-              <p class="text-xs text-slate-400 font-mono mt-2">Defeat the boss in full-screen immersion! Hit correct targets, avoid wrong pads or your health drops!</p>
+              <h3 class="font-arcade text-2xl font-black text-white">SHADOW TITAN BOSS ARENA (3 STAGES)</h3>
+              <p class="text-xs text-slate-400 font-mono mt-2">Boss attacks player continuously! Defeat each stage fast to earn <strong>+30 HP Heal</strong> per stage progression!</p>
             </div>
             <button onclick="sendWebCommand('START_BOSS')" class="w-full py-4 bg-gradient-to-r from-neonMagenta to-purple-600 text-white rounded-xl font-arcade font-bold text-xs shadow-glowMagenta uppercase tracking-wider">
               <i class="fa-solid fa-sword mr-2"></i> Launch Boss Battle (Unlock Pin 15)
@@ -393,6 +391,9 @@
     let isBossPlaying = false;
     let bossHp = 100;
     let playerHp = 100;
+    let bossStage = 1; // Stage 1, 2, 3
+    let bossAttackInterval = null;
+
     let currentTargetPad = -1;
     let activeMode = 'classic';
 
@@ -428,7 +429,7 @@
     }
 
     function startSynthLoop() {
-      const notes = [110, 130.81, 146.83, 164.81, 196.00, 220.00]; // Arpeggio bass notes (A minor vibe)
+      const notes = [110, 130.81, 146.83, 164.81, 196.00, 220.00]; 
       let step = 0;
       bgmInterval = setInterval(() => {
         if (!isBgmPlaying || !audioCtx) return;
@@ -541,8 +542,9 @@
 
     // --- CLASSIC MODE SYNC TIMER ---
     function startClassicTimerSynced() {
-      if (isClassicPlaying) return;
       isClassicPlaying = true;
+      isBossPlaying = false;
+      if (bossAttackInterval) clearInterval(bossAttackInterval);
       classicTotalHits = 0;
       document.getElementById('hardwareState').innerText = 'GAME RUNNING (45s)';
       document.getElementById('hitsDisplay').innerText = 'TOTAL HITS: 0';
@@ -561,20 +563,37 @@
       }, 1000);
     }
 
-    // --- FULL-SCREEN BOSS ARENA ---
+    // --- FULL-SCREEN BOSS ARENA (WITH STAGES & REGEN DMG) ---
     function startBossArenaSynced() {
-      if (isBossPlaying) return;
       isBossPlaying = true;
+      isClassicPlaying = false;
+      bossStage = 1;
       bossHp = 100;
       playerHp = 100;
       updateBossArenaUI();
 
       document.getElementById('fullScreenBossArena').classList.remove('hidden');
       triggerMonsterAction('idle');
+
+      // Boss menyerang player sedikit demi sedikit setiap 1.5 saat (Time Pressure)
+      if (bossAttackInterval) clearInterval(bossAttackInterval);
+      bossAttackInterval = setInterval(() => {
+        if (!isBossPlaying) return;
+        playerHp = Math.max(0, playerHp - 2); // Kurang 2 HP setiap tick
+        updateBossArenaUI();
+        flashScreenRedQuick();
+
+        if (playerHp <= 0) {
+          clearInterval(bossAttackInterval);
+          alert('DEFEAT! Player health depleted by boss attacks!');
+          exitBossArena();
+        }
+      }, 1500);
     }
 
     function exitBossArena() {
       isBossPlaying = false;
+      if (bossAttackInterval) clearInterval(bossAttackInterval);
       document.getElementById('fullScreenBossArena').classList.add('hidden');
     }
 
@@ -606,26 +625,43 @@
         }
       } else if (isBossPlaying) {
         if (padIndex === currentTargetPad) {
-          // Correct Hit -> Boss HP Decreases
+          // Pukulan Betul -> Kurangkan HP Boss
           bossHp = Math.max(0, bossHp - 15);
           triggerMonsterAction('hurt');
           updateBossArenaUI();
 
           if (bossHp <= 0) {
-            triggerMonsterAction('defeat');
-            setTimeout(() => {
-              alert('VICTORY! Boss defeated!');
-              exitBossArena();
-            }, 1200);
+            // Boss tumpas di stage ini -> Naik Stage & Heal Player (+30 HP)
+            if (bossStage < 3) {
+              bossStage++;
+              bossHp = 100 + (bossStage * 25); // Boss makin kuat tiap stage
+              playerHp = Math.min(100, playerHp + 30); // HEAL PLAYER +30 HP!
+              triggerMonsterAction('defeat');
+              
+              setTimeout(() => {
+                triggerMonsterAction('idle');
+                alert(`STAGE ${bossStage - 1} CLEARED! Player Healed +30 HP. Advancing to Stage ${bossStage}!`);
+                updateBossArenaUI();
+              }, 600);
+            } else {
+              // Final Stage Cleared!
+              triggerMonsterAction('defeat');
+              if (bossAttackInterval) clearInterval(bossAttackInterval);
+              setTimeout(() => {
+                alert('VICTORY! All 3 Stages of Shadow Titan defeated!');
+                exitBossArena();
+              }, 1200);
+            }
           }
         } else {
-          // Wrong Hit -> Player HP Decreases
-          playerHp = Math.max(0, playerHp - 15);
+          // Pukulan Salah -> Penalti Player HP
+          playerHp = Math.max(0, playerHp - 10);
           triggerMonsterAction('hurt');
           updateBossArenaUI();
           flashScreenRed();
 
           if (playerHp <= 0) {
+            if (bossAttackInterval) clearInterval(bossAttackInterval);
             alert('DEFEAT! Player health depleted!');
             exitBossArena();
           }
@@ -634,10 +670,15 @@
     }
 
     function updateBossArenaUI() {
-      document.getElementById('bossArenaHpText').innerText = Math.round(bossHp) + ' / 100 HP';
-      document.getElementById('bossArenaHpBar').style.width = bossHp + '%';
+      document.getElementById('bossArenaHpText').innerText = Math.round(bossHp) + ' HP';
+      let maxBossHp = 100 + (bossStage * 25);
+      document.getElementById('bossArenaHpBar').style.width = Math.min(100, (bossHp / maxBossHp) * 100) + '%';
+      
       document.getElementById('playerArenaHpText').innerText = Math.round(playerHp) + ' / 100 HP';
       document.getElementById('playerArenaHpBar').style.width = playerHp + '%';
+
+      document.getElementById('currentStageDisplay').innerText = `STAGE ${bossStage} / 3`;
+      document.getElementById('bossNameTitle').innerText = `BOSS: STAGE ${bossStage}`;
     }
 
     function triggerMonsterAction(action) {
@@ -648,6 +689,7 @@
         setTimeout(() => box.classList.remove('boss-hurt'), 400);
       } else if (action === 'defeat') {
         box.classList.add('boss-defeat');
+        setTimeout(() => box.classList.remove('boss-defeat'), 1200);
       } else {
         box.classList.add('boss-idle');
       }
@@ -657,6 +699,12 @@
       const arena = document.getElementById('fullScreenBossArena');
       arena.style.backgroundColor = 'rgba(239, 68, 68, 0.4)';
       setTimeout(() => arena.style.backgroundColor = 'rgba(3, 7, 18, 0.95)', 200);
+    }
+
+    function flashScreenRedQuick() {
+      const arena = document.getElementById('fullScreenBossArena');
+      arena.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+      setTimeout(() => arena.style.backgroundColor = 'rgba(3, 7, 18, 0.95)', 100);
     }
 
     function endClassicGame() {
