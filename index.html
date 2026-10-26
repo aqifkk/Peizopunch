@@ -144,7 +144,7 @@
         <div class="glass-panel p-3 rounded-2xl border border-neonMagenta/50 shadow-glowMagenta">
           <div class="flex justify-between text-[11px] font-mono mb-1">
             <span class="text-neonMagenta font-bold uppercase" id="bossNameTitle">BOSS: STAGE 1</span>
-            <span id="bossArenaHpText" class="text-neonYellow font-bold">100 / 100 HP</span>
+            <span id="bossArenaHpText" class="text-neonYellow font-bold">100 HP</span>
           </div>
           <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-800">
             <div id="bossArenaHpBar" class="bg-gradient-to-r from-neonYellow to-neonMagenta h-full transition-all duration-200" style="width: 100%"></div>
@@ -391,7 +391,7 @@
     let isBossPlaying = false;
     let bossHp = 100;
     let playerHp = 100;
-    let bossStage = 1; // Stage 1, 2, 3
+    let bossStage = 1; 
     let bossAttackInterval = null;
 
     let currentTargetPad = -1;
@@ -575,11 +575,10 @@
       document.getElementById('fullScreenBossArena').classList.remove('hidden');
       triggerMonsterAction('idle');
 
-      // Boss menyerang player sedikit demi sedikit setiap 1.5 saat (Time Pressure)
       if (bossAttackInterval) clearInterval(bossAttackInterval);
       bossAttackInterval = setInterval(() => {
         if (!isBossPlaying) return;
-        playerHp = Math.max(0, playerHp - 2); // Kurang 2 HP setiap tick
+        playerHp = Math.max(0, playerHp - 2); 
         updateBossArenaUI();
         flashScreenRedQuick();
 
@@ -625,17 +624,16 @@
         }
       } else if (isBossPlaying) {
         if (padIndex === currentTargetPad) {
-          // Pukulan Betul -> Kurangkan HP Boss
+          // Pukulan Betul -> Kurangkan HP Boss dengan pasti!
           bossHp = Math.max(0, bossHp - 15);
           triggerMonsterAction('hurt');
           updateBossArenaUI();
 
           if (bossHp <= 0) {
-            // Boss tumpas di stage ini -> Naik Stage & Heal Player (+30 HP)
             if (bossStage < 3) {
               bossStage++;
-              bossHp = 100 + (bossStage * 25); // Boss makin kuat tiap stage
-              playerHp = Math.min(100, playerHp + 30); // HEAL PLAYER +30 HP!
+              bossHp = 100 + (bossStage * 25); 
+              playerHp = Math.min(100, playerHp + 30); // Heal Player +30 HP
               triggerMonsterAction('defeat');
               
               setTimeout(() => {
@@ -644,7 +642,6 @@
                 updateBossArenaUI();
               }, 600);
             } else {
-              // Final Stage Cleared!
               triggerMonsterAction('defeat');
               if (bossAttackInterval) clearInterval(bossAttackInterval);
               setTimeout(() => {
@@ -654,7 +651,7 @@
             }
           }
         } else {
-          // Pukulan Salah -> Penalti Player HP
+          // Pukulan Salah -> Kurangkan HP Player
           playerHp = Math.max(0, playerHp - 10);
           triggerMonsterAction('hurt');
           updateBossArenaUI();
