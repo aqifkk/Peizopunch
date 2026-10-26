@@ -399,18 +399,14 @@
     let lastEspMessageTime = 0;
     let mqttClient = null;
 
-    // --- SYNTHESIZED BACKGROUND MUSIC (BGM) ---
+    // --- SYNTHESIZED BGM ---
     let audioCtx = null;
     let bgmInterval = null;
     let isBgmPlaying = false;
 
     function toggleBGM() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
 
       isBgmPlaying = !isBgmPlaying;
       const icon = document.getElementById('audioIcon');
@@ -483,30 +479,36 @@
         mqttDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
         mqttText.innerText = 'ESP32 Online';
 
+        const strMsg = payload.toString().trim();
+
         if (incomingTopic === stateTopic) {
-          const stateMsg = payload.toString();
-          if (stateMsg === 'CLASSIC_START') {
+          if (strMsg === 'CLASSIC_START') {
             startClassicTimerSynced();
-          } else if (stateMsg === 'BOSS_START') {
+          } else if (strMsg === 'BOSS_START') {
             startBossArenaSynced();
           }
         } 
         else if (incomingTopic === targetTopic) {
           try {
-            const data = JSON.parse(payload.toString());
+            const data = JSON.parse(strMsg);
             if (data.target !== undefined) {
-              currentTargetPad = data.target;
+              currentTargetPad = Number(data.target);
               updateTargetUI(currentTargetPad);
             }
           } catch(e) {}
         } 
         else if (incomingTopic === forceTopic) {
           try {
-            const data = JSON.parse(payload.toString());
+            const data = JSON.parse(strMsg);
             if (data.val > 140) {
-              handlePiezoInput(data.pad);
+              handlePiezoInput(Number(data.pad));
             }
-          } catch(e) {}
+          } catch(e) {
+            const padNum = Number(strMsg);
+            if (!isNaN(padNum)) {
+              handlePiezoInput(padNum);
+            }
+          }
         }
       });
 
@@ -610,17 +612,20 @@
     }
 
     function simulatePiezoHit(padIndex) {
-      handlePiezoInput(padIndex);
+      handlePiezoInput(Number(padIndex));
     }
 
     function handlePiezoInput(padIndex) {
+      const hitPad = Number(padIndex);
+      const targetPad = Number(currentTargetPad);
+
       if (isClassicPlaying) {
-        if (padIndex === currentTargetPad) {
+        if (hitPad === targetPad) {
           classicTotalHits++;
           document.getElementById('hitsDisplay').innerText = 'TOTAL HITS: ' + classicTotalHits;
         }
       } else if (isBossPlaying) {
-        if (padIndex === currentTargetPad) {
+        if (hitPad === targetPad) {
           bossHp = Math.max(0, bossHp - 15);
           triggerMonsterAction('hurt');
           updateBossArenaUI();
@@ -661,12 +666,14 @@
     }
 
     function updateBossArenaUI() {
-      document.getElementById('bossArenaHpText').innerText = Math.round(bossHp) + ' HP';
       let maxBossHp = 100 + (bossStage * 25);
-      document.getElementById('bossArenaHpBar').style.width = Math.min(100, (bossHp / maxBossHp) * 100) + '%';
+      let bossPct = Math.max(0, Math.min(100, (bossHp / maxBossHp) * 100));
+      
+      document.getElementById('bossArenaHpText').innerText = Math.round(bossHp) + ' HP';
+      document.getElementById('bossArenaHpBar').style.width = bossPct + '%';
       
       document.getElementById('playerArenaHpText').innerText = Math.round(playerHp) + ' / 100 HP';
-      document.getElementById('playerArenaHpBar').style.width = playerHp + '%';
+      document.getElementById('playerArenaHpBar').style.width = Math.max(0, playerHp) + '%';
 
       document.getElementById('currentStageDisplay').innerText = `STAGE ${bossStage} / 3`;
       document.getElementById('bossNameTitle').innerText = `BOSS: STAGE ${bossStage}`;
