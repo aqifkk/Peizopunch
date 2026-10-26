@@ -277,7 +277,7 @@
             </div>
 
             <div class="glass-panel p-5 rounded-3xl border border-slate-800">
-              <h4 class="font-arcade text-xs font-bold text-slate-300 uppercase mb-3">4 Relay LED Strips State (Pins 13, 26, 27, 14)</h4>
+              <h4 class="font-arcade text-xs font-bold text-slate-300 uppercase mb-3">4 Relay LED Strips State (Pins 12, 26, 27, 14)</h4>
               <div class="grid grid-cols-2 gap-2 text-center font-mono text-xs">
                 <div id="relay-0" class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-slate-400">Relay 0 (Pin 12)<br><span class="text-[10px] text-slate-500">OFF</span></div>
                 <div id="relay-1" class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-slate-400">Relay 1 (Pin 26)<br><span class="text-[10px] text-slate-500">OFF</span></div>
@@ -692,15 +692,22 @@
       handlePiezoInput(padIndex);
     }
 
+    // Fungsi cermin untuk menyelaraskan kiri/kanan sebenar dengan web
     function handlePiezoInput(padIndex) {
+      let mappedPad = padIndex;
+      if (padIndex === 0) mappedPad = 1;
+      else if (padIndex === 1) mappedPad = 0;
+      else if (padIndex === 2) mappedPad = 3;
+      else if (padIndex === 3) mappedPad = 2;
+
       if (isClassicPlaying) {
-        if (padIndex === currentTargetPad) {
+        if (mappedPad === currentTargetPad) {
           classicTotalHits++;
           document.getElementById('hitsDisplay').innerText = 'TOTAL HITS: ' + classicTotalHits;
           pickNewClassicTarget();
         }
       } else if (isBossPlaying) {
-        hitBossPad(padIndex);
+        hitBossPad(mappedPad);
       }
     }
 
