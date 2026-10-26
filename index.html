@@ -105,7 +105,7 @@
           <h1 class="font-arcade font-black text-2xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-neonCyan via-white to-neonMagenta">
             PIEZOPUNCH NETWORK
           </h1>
-          <p class="text-xs font-mono text-slate-400 mt-2 uppercase tracking-widest">ESP32 Arcade System v2.3</p>
+          <p class="text-xs font-mono text-slate-400 mt-2 uppercase tracking-widest">ESP32 Arcade System v2.4</p>
         </div>
 
         <div class="flex bg-slate-900/90 p-1 rounded-xl mb-6 border border-slate-800 text-xs font-arcade">
@@ -393,7 +393,7 @@
     let bossStage = 1; 
     let bossAttackInterval = null;
 
-    let currentTargetPad = 0; // Tetapkan nilai awal supaya tidak -1
+    let currentTargetPad = 0;
     let activeMode = 'classic';
 
     let lastEspMessageTime = 0;
@@ -491,7 +491,8 @@
         else if (incomingTopic === targetTopic) {
           try {
             const data = JSON.parse(strMsg);
-            if (data.target !== undefined && !isBossPlaying) { // Guna target ESP32 hanya untuk Classic
+            if (data.target !== undefined) {
+              // Sentiasa terima target sama ada Classic atau Boss supaya segerak dengan ESP32
               currentTargetPad = Number(data.target);
               updateTargetUI(currentTargetPad);
             }
@@ -574,9 +575,6 @@
       document.getElementById('fullScreenBossArena').classList.remove('hidden');
       triggerMonsterAction('idle');
 
-      // Web tetapkan target pertama untuk Boss secara automatik
-      setNewBossTarget();
-
       if (bossAttackInterval) clearInterval(bossAttackInterval);
       bossAttackInterval = setInterval(() => {
         if (!isBossPlaying) return;
@@ -590,18 +588,6 @@
           exitBossArena();
         }
       }, 1500);
-    }
-
-    // Fungsi khas tukar target Boss secara automatik di web
-    function setNewBossTarget() {
-      if (!isBossPlaying) return;
-      let nextPad;
-      do {
-        nextPad = Math.floor(Math.random() * 4);
-      } while (nextPad === currentTargetPad);
-
-      currentTargetPad = nextPad;
-      updateTargetUI(currentTargetPad);
     }
 
     function exitBossArena() {
@@ -641,11 +627,10 @@
         }
       } else if (isBossPlaying) {
         if (hitPad === targetPad) {
-          // HIT BETUL -> Boss kena damage & tukar target baru serta-merta!
+          // HIT BETUL -> Kurangkan HP Boss & skrin bertindak balas
           bossHp = Math.max(0, bossHp - 15);
           triggerMonsterAction('hurt');
           updateBossArenaUI();
-          setNewBossTarget(); // Tukar target baru serta-merta
 
           if (bossHp <= 0) {
             if (bossStage < 3) {
@@ -657,7 +642,6 @@
               setTimeout(() => {
                 triggerMonsterAction('idle');
                 updateBossArenaUI();
-                setNewBossTarget();
               }, 800);
             } else {
               triggerMonsterAction('defeat');
@@ -669,7 +653,7 @@
             }
           }
         } else {
-          // HIT SALAH -> Player kena damage
+          // HIT SALAH -> Kurangkan HP Player
           playerHp = Math.max(0, playerHp - 10);
           triggerMonsterAction('hurt');
           updateBossArenaUI();
@@ -752,8 +736,8 @@
       } else {
         signupBtn.className = "w-1/2 py-2.5 rounded-lg text-neonMagenta bg-slate-800 font-bold transition";
         loginBtn.className = "w-1/2 py-2.5 rounded-lg text-slate-400 hover:text-white transition";
-        signupForm.classList.add('hidden');
-        loginForm.classList.remove('hidden');
+        signupForm.classList.remove('hidden');
+        loginForm.classList.add('hidden');
       }
     }
 
