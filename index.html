@@ -53,32 +53,52 @@
     }
     .animate-pulse-glow { animation: pulseGlow 2.5s infinite ease-in-out; }
 
-    /* Monster Animations */
-    @keyframes monsterShake {
-      0% { transform: translate(0, 0) scale(1); filter: drop-shadow(0 0 10px #ff007f); }
-      20% { transform: translate(-12px, 6px) scale(1.08) rotate(-4deg); filter: drop-shadow(0 0 25px #ffea00) hue-rotate(90deg); }
-      40% { transform: translate(12px, -6px) scale(1.12) rotate(4deg); filter: drop-shadow(0 0 25px #ff007f) hue-rotate(180deg); }
-      60% { transform: translate(-6px, -6px) scale(1.05); filter: drop-shadow(0 0 20px #00f3ff); }
-      100% { transform: translate(0, 0) scale(1); filter: drop-shadow(0 0 10px #ff007f); }
+    /* 2D Boss Monster Animations */
+    @keyframes bossFloat {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-15px) scale(1.03); }
     }
-    @keyframes monsterDie {
-      0% { transform: scale(1) rotate(0deg); opacity: 1; filter: brightness(1) drop-shadow(0 0 20px #ff007f); }
-      50% { transform: scale(1.3) rotate(20deg); opacity: 0.7; filter: brightness(3) grayscale(1); }
-      100% { transform: scale(0) rotate(70deg); opacity: 0; filter: brightness(5); }
+    @keyframes bossMad {
+      0% { transform: translate(0, 0) scale(1) rotate(0deg); filter: drop-shadow(0 0 15px #ff007f); }
+      25% { transform: translate(-15px, 8px) scale(1.1) rotate(-6deg); filter: drop-shadow(0 0 35px #ffea00) hue-rotate(90deg); }
+      50% { transform: translate(15px, -8px) scale(1.15) rotate(6deg); filter: drop-shadow(0 0 35px #00f3ff) hue-rotate(180deg); }
+      75% { transform: translate(-8px, -5px) scale(1.08); }
+      100% { transform: translate(0, 0) scale(1) rotate(0deg); filter: drop-shadow(0 0 15px #ff007f); }
     }
-    .monster-idle { animation: pulseGlow 2s infinite ease-in-out; }
-    .monster-mad { animation: monsterShake 0.35s ease-in-out; }
-    .monster-dying { animation: monsterDie 1.2s forwards ease-out; }
+    @keyframes bossDie {
+      0% { transform: scale(1) rotate(0deg); opacity: 1; filter: brightness(1) drop-shadow(0 0 25px #ff007f); }
+      40% { transform: scale(1.4) rotate(-15deg) translateY(-20px); filter: brightness(3) sepia(1); }
+      100% { transform: scale(0) rotate(180deg) translateY(50px); opacity: 0; filter: brightness(5) grayscale(1); }
+    }
+    .boss-idle { animation: bossFloat 3s infinite ease-in-out; }
+    .boss-hurt { animation: bossMad 0.4s ease-in-out; }
+    .boss-defeat { animation: bossDie 1.2s forwards ease-in-out; }
+
+    /* Background Neon Grid */
+    .bg-grid {
+      background-size: 40px 40px;
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    }
   </style>
 </head>
-<body class="h-full text-slate-100 font-sans antialiased bg-slate-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(0,243,255,0.12),rgba(255,255,255,0))] selection:bg-neonMagenta selection:text-white">
+<body class="h-full text-slate-100 font-sans antialiased bg-slate-950 bg-grid selection:bg-neonMagenta selection:text-white">
+
+  <!-- Audio Toggle Floating Button -->
+  <button onclick="toggleBGM()" id="bgmToggleBtn" class="fixed bottom-4 right-4 z-50 bg-slate-900 border border-neonCyan/40 text-neonCyan p-3 rounded-2xl shadow-glowCyan hover:bg-slate-800 transition flex items-center space-x-2 text-xs font-arcade">
+    <i class="fa-solid fa-volume-xmark text-sm" id="audioIcon"></i>
+    <span class="hidden sm:inline" id="audioText">BGM: OFF</span>
+  </button>
 
   <!-- Main Container -->
   <div id="app" class="min-h-screen flex flex-col justify-between">
     
     <!-- LOGIN / SIGNUP OVERLAY -->
-    <div id="authScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl">
+    <div id="authScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-xl">
       <div class="glass-panel max-w-md w-full rounded-3xl p-8 border border-neonCyan/40 shadow-glowCyan relative overflow-hidden">
+        <div class="absolute -top-12 -left-12 w-32 h-32 bg-neonCyan/20 rounded-full blur-2xl"></div>
+        <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-neonMagenta/20 rounded-full blur-2xl"></div>
+
         <div class="text-center mb-8 relative z-10">
           <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-neonMagenta to-neonCyan p-0.5 mx-auto mb-4 shadow-glowCyan animate-pulse-glow">
             <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
@@ -88,7 +108,7 @@
           <h1 class="font-arcade font-black text-2xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-neonCyan via-white to-neonMagenta">
             PIEZOPUNCH NETWORK
           </h1>
-          <p class="text-xs font-mono text-slate-400 mt-2 uppercase tracking-widest">ESP32 Arcade System</p>
+          <p class="text-xs font-mono text-slate-400 mt-2 uppercase tracking-widest">ESP32 Arcade System v2.0</p>
         </div>
 
         <div class="flex bg-slate-900/90 p-1 rounded-xl mb-6 border border-slate-800 text-xs font-arcade">
@@ -121,9 +141,8 @@
 
     <!-- FULL-SCREEN BOSS BATTLE ARENA MODAL -->
     <div id="fullScreenBossArena" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-2xl flex flex-col justify-between p-6 hidden">
-      <!-- Top Bars (Boss HP & Player HP) -->
-      <div class="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-        <!-- Boss Bar -->
+      <!-- Top Health Bars -->
+      <div class="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
         <div class="glass-panel p-4 rounded-2xl border border-neonMagenta/50 shadow-glowMagenta">
           <div class="flex justify-between text-xs font-mono mb-1">
             <span class="text-neonMagenta font-bold uppercase"><i class="fa-solid fa-dragon mr-1"></i> BOSS: SHADOW TITAN</span>
@@ -134,10 +153,9 @@
           </div>
         </div>
 
-        <!-- Player Bar -->
         <div class="glass-panel p-4 rounded-2xl border border-neonCyan/50 shadow-glowCyan">
           <div class="flex justify-between text-xs font-mono mb-1">
-            <span class="text-neonCyan font-bold uppercase"><i class="fa-solid fa-shield-halved mr-1"></i> PLAYER HP (PUNCTURE PENALTY)</span>
+            <span class="text-neonCyan font-bold uppercase"><i class="fa-solid fa-shield-halved mr-1"></i> PLAYER HP</span>
             <span id="playerArenaHpText" class="text-emerald-400 font-bold">100 / 100 HP</span>
           </div>
           <div class="w-full bg-slate-900 rounded-full h-4 overflow-hidden border border-slate-800">
@@ -146,24 +164,36 @@
         </div>
       </div>
 
-      <!-- Center Monster Animation Area -->
-      <div class="flex-1 flex flex-col items-center justify-center relative my-4">
-        <div id="bossMonsterContainer" class="relative flex flex-col items-center">
-          <!-- Monster Avatar / Icon with dynamic animations -->
-          <div id="bossMonsterAvatar" class="w-48 h-48 rounded-full bg-gradient-to-tr from-purple-900 via-slate-900 to-neonMagenta p-1 flex items-center justify-center shadow-glowMagenta monster-idle">
-            <div class="w-full h-full bg-slate-950 rounded-full flex items-center justify-center text-7xl text-neonMagenta">
-              <i class="fa-solid fa-spider"></i>
-            </div>
+      <!-- Center 2D Animated Boss Monster -->
+      <div class="flex-1 flex flex-col items-center justify-center relative my-2">
+        <div class="relative flex flex-col items-center">
+          <!-- SVG 2D Animated Monster Avatar -->
+          <div id="bossMonsterSvgBox" class="w-56 h-56 flex items-center justify-center boss-idle filter drop-shadow-[0_0_30px_rgba(255,0,127,0.6)]">
+            <svg viewBox="0 0 200 200" class="w-full h-full">
+              <!-- Body -->
+              <ellipse cx="100" cy="110" rx="55" ry="50" fill="#1e1b4b" stroke="#ff007f" stroke-width="4"/>
+              <!-- Glowing Core Eye -->
+              <circle cx="100" cy="95" r="18" fill="#00f3ff" class="animate-pulse"/>
+              <circle cx="100" cy="95" r="8" fill="#ffea00"/>
+              <!-- Horns -->
+              <polygon points="65,70 45,30 75,55" fill="#ff007f"/>
+              <polygon points="135,70 155,30 125,55" fill="#ff007f"/>
+              <!-- Angry Mouth / Teeth -->
+              <path d="M 75 130 Q 100 150 125 130 Z" fill="#ffea00"/>
+              <line x1="85" y1="130" x2="85" y2="142" stroke="#1e1b4b" stroke-width="3"/>
+              <line x1="100" y1="130" x2="100" y2="145" stroke="#1e1b4b" stroke-width="3"/>
+              <line x1="115" y1="130" x2="115" y2="142" stroke="#1e1b4b" stroke-width="3"/>
+            </svg>
           </div>
-          <h3 id="bossArenaStatusMsg" class="font-arcade text-lg font-bold text-neonYellow mt-4 uppercase tracking-widest">HIT THE HIGHLIGHTED TARGET!</h3>
+          <h3 id="bossArenaStatusMsg" class="font-arcade text-base font-bold text-neonYellow mt-4 uppercase tracking-widest">STRIKE THE LIT PAD!</h3>
         </div>
       </div>
 
-      <!-- Bottom Arena Controls / Target Feedback -->
-      <div class="max-w-md mx-auto w-full glass-panel p-6 rounded-3xl border border-slate-800 text-center space-y-3">
-        <p class="text-xs font-mono text-slate-400">CURRENT TARGET PAD:</p>
+      <!-- Bottom Arena Target & Controls -->
+      <div class="max-w-md mx-auto w-full glass-panel p-5 rounded-3xl border border-slate-800 text-center space-y-3">
+        <p class="text-xs font-mono text-slate-400">ACTIVE TARGET PAD:</p>
         <div id="bossArenaTargetDisplay" class="text-3xl font-arcade font-black text-neonCyan">WAITING...</div>
-        <button onclick="exitBossArena()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 rounded-xl font-arcade text-xs uppercase">
+        <button onclick="exitBossArena()" class="w-full py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 rounded-xl font-arcade text-xs uppercase">
           Quit Boss Fight
         </button>
       </div>
@@ -369,6 +399,58 @@
     let lastEspMessageTime = 0;
     let mqttClient = null;
 
+    // --- SYNTHESIZED BACKGROUND MUSIC (BGM) ---
+    let audioCtx = null;
+    let bgmInterval = null;
+    let isBgmPlaying = false;
+
+    function toggleBGM() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      isBgmPlaying = !isBgmPlaying;
+      const icon = document.getElementById('audioIcon');
+      const text = document.getElementById('audioText');
+
+      if (isBgmPlaying) {
+        icon.className = "fa-solid fa-volume-high text-sm";
+        text.innerText = "BGM: ON";
+        startSynthLoop();
+      } else {
+        icon.className = "fa-solid fa-volume-xmark text-sm";
+        text.innerText = "BGM: OFF";
+        clearInterval(bgmInterval);
+      }
+    }
+
+    function startSynthLoop() {
+      const notes = [110, 130.81, 146.83, 164.81, 196.00, 220.00]; // Arpeggio bass notes (A minor vibe)
+      let step = 0;
+      bgmInterval = setInterval(() => {
+        if (!isBgmPlaying || !audioCtx) return;
+        try {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(notes[step % notes.length], audioCtx.currentTime);
+          
+          gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.25);
+          step++;
+        } catch(e) {}
+      }, 200);
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       if (currentUser) {
         document.getElementById('authScreen').classList.add('hidden');
@@ -524,22 +606,22 @@
         }
       } else if (isBossPlaying) {
         if (padIndex === currentTargetPad) {
-          // Correct Hit -> Damage Boss
+          // Correct Hit -> Boss HP Decreases
           bossHp = Math.max(0, bossHp - 15);
-          triggerMonsterAction('mad');
+          triggerMonsterAction('hurt');
           updateBossArenaUI();
 
           if (bossHp <= 0) {
-            triggerMonsterAction('die');
+            triggerMonsterAction('defeat');
             setTimeout(() => {
               alert('VICTORY! Boss defeated!');
               exitBossArena();
             }, 1200);
           }
         } else {
-          // Wrong Hit -> Penalty: Player HP goes down!
+          // Wrong Hit -> Player HP Decreases
           playerHp = Math.max(0, playerHp - 15);
-          triggerMonsterAction('mad');
+          triggerMonsterAction('hurt');
           updateBossArenaUI();
           flashScreenRed();
 
@@ -559,15 +641,15 @@
     }
 
     function triggerMonsterAction(action) {
-      const avatar = document.getElementById('bossMonsterAvatar');
-      avatar.className = 'w-48 h-48 rounded-full bg-gradient-to-tr from-purple-900 via-slate-900 to-neonMagenta p-1 flex items-center justify-center shadow-glowMagenta';
-      if (action === 'mad') {
-        avatar.classList.add('monster-mad');
-        setTimeout(() => avatar.classList.remove('monster-mad'), 350);
-      } else if (action === 'die') {
-        avatar.classList.add('monster-dying');
+      const box = document.getElementById('bossMonsterSvgBox');
+      box.className = 'w-56 h-56 flex items-center justify-center filter drop-shadow-[0_0_30px_rgba(255,0,127,0.6)]';
+      if (action === 'hurt') {
+        box.classList.add('boss-hurt');
+        setTimeout(() => box.classList.remove('boss-hurt'), 400);
+      } else if (action === 'defeat') {
+        box.classList.add('boss-defeat');
       } else {
-        avatar.classList.add('monster-idle');
+        box.classList.add('boss-idle');
       }
     }
 
