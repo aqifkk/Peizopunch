@@ -52,6 +52,23 @@
       50% { opacity: 1; transform: scale(1.02); }
     }
     .animate-pulse-glow { animation: pulseGlow 2.5s infinite ease-in-out; }
+
+    /* Monster Animations */
+    @keyframes monsterShake {
+      0% { transform: translate(0, 0) scale(1); filter: drop-shadow(0 0 10px #ff007f); }
+      20% { transform: translate(-12px, 6px) scale(1.08) rotate(-4deg); filter: drop-shadow(0 0 25px #ffea00) hue-rotate(90deg); }
+      40% { transform: translate(12px, -6px) scale(1.12) rotate(4deg); filter: drop-shadow(0 0 25px #ff007f) hue-rotate(180deg); }
+      60% { transform: translate(-6px, -6px) scale(1.05); filter: drop-shadow(0 0 20px #00f3ff); }
+      100% { transform: translate(0, 0) scale(1); filter: drop-shadow(0 0 10px #ff007f); }
+    }
+    @keyframes monsterDie {
+      0% { transform: scale(1) rotate(0deg); opacity: 1; filter: brightness(1) drop-shadow(0 0 20px #ff007f); }
+      50% { transform: scale(1.3) rotate(20deg); opacity: 0.7; filter: brightness(3) grayscale(1); }
+      100% { transform: scale(0) rotate(70deg); opacity: 0; filter: brightness(5); }
+    }
+    .monster-idle { animation: pulseGlow 2s infinite ease-in-out; }
+    .monster-mad { animation: monsterShake 0.35s ease-in-out; }
+    .monster-dying { animation: monsterDie 1.2s forwards ease-out; }
   </style>
 </head>
 <body class="h-full text-slate-100 font-sans antialiased bg-slate-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(0,243,255,0.12),rgba(255,255,255,0))] selection:bg-neonMagenta selection:text-white">
@@ -62,10 +79,6 @@
     <!-- LOGIN / SIGNUP OVERLAY -->
     <div id="authScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl">
       <div class="glass-panel max-w-md w-full rounded-3xl p-8 border border-neonCyan/40 shadow-glowCyan relative overflow-hidden">
-        
-        <div class="absolute -top-12 -left-12 w-32 h-32 bg-neonCyan/20 rounded-full blur-2xl"></div>
-        <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-neonMagenta/20 rounded-full blur-2xl"></div>
-
         <div class="text-center mb-8 relative z-10">
           <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-neonMagenta to-neonCyan p-0.5 mx-auto mb-4 shadow-glowCyan animate-pulse-glow">
             <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
@@ -79,73 +92,79 @@
         </div>
 
         <div class="flex bg-slate-900/90 p-1 rounded-xl mb-6 border border-slate-800 text-xs font-arcade">
-          <button id="tabLoginBtn" onclick="switchAuthTab('login')" class="w-1/2 py-2.5 rounded-lg text-neonCyan bg-slate-800 font-bold transition">
-            Log In
-          </button>
-          <button id="tabSignupBtn" onclick="switchAuthTab('signup')" class="w-1/2 py-2.5 rounded-lg text-slate-400 hover:text-white transition">
-            Sign Up
-          </button>
+          <button id="tabLoginBtn" onclick="switchAuthTab('login')" class="w-1/2 py-2.5 rounded-lg text-neonCyan bg-slate-800 font-bold transition">Log In</button>
+          <button id="tabSignupBtn" onclick="switchAuthTab('signup')" class="w-1/2 py-2.5 rounded-lg text-slate-400 hover:text-white transition">Sign Up</button>
         </div>
 
-        <!-- LOGIN FORM -->
         <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4 relative z-10">
           <div>
             <label class="block text-xs font-mono text-slate-300 mb-1">Username</label>
-            <div class="relative">
-              <i class="fa-solid fa-user absolute left-3.5 top-3 text-slate-500 text-xs"></i>
-              <input type="text" id="loginUsername" required placeholder="Enter username" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-neonCyan font-mono">
-            </div>
+            <input type="text" id="loginUsername" required placeholder="Enter username" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-neonCyan font-mono">
           </div>
-
           <div>
             <label class="block text-xs font-mono text-slate-300 mb-1">Password</label>
-            <div class="relative">
-              <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-500 text-xs"></i>
-              <input type="password" id="loginPassword" required placeholder="Enter password" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-neonCyan font-mono">
-            </div>
+            <input type="password" id="loginPassword" required placeholder="Enter password" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-neonCyan font-mono">
           </div>
-
-          <div id="loginError" class="text-xs font-mono text-neonMagenta hidden text-center pt-1">
-            <i class="fa-solid fa-triangle-exclamation mr-1"></i> Invalid Username or Password!
-          </div>
-
-          <button type="submit" class="w-full bg-gradient-to-r from-neonCyan to-blue-600 text-slate-950 font-arcade font-bold py-3.5 rounded-xl shadow-glowCyan hover:opacity-90 transition uppercase tracking-wider text-xs mt-2">
-            Log In <i class="fa-solid fa-right-to-bracket ml-1.5"></i>
-          </button>
+          <div id="loginError" class="text-xs font-mono text-neonMagenta hidden text-center pt-1">Invalid Username or Password!</div>
+          <button type="submit" class="w-full bg-gradient-to-r from-neonCyan to-blue-600 text-slate-950 font-arcade font-bold py-3.5 rounded-xl shadow-glowCyan uppercase tracking-wider text-xs mt-2">Log In</button>
         </form>
 
-        <!-- SIGNUP FORM -->
         <form id="signupForm" onsubmit="handleSignup(event)" class="space-y-4 relative z-10 hidden">
           <div>
             <label class="block text-xs font-mono text-slate-300 mb-1">Choose Username</label>
-            <div class="relative">
-              <i class="fa-solid fa-user-plus absolute left-3.5 top-3 text-slate-500 text-xs"></i>
-              <input type="text" id="signupUsername" required placeholder="e.g. Aqif" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-neonMagenta font-mono">
-            </div>
-            <p class="text-[10px] text-slate-400 mt-1 font-mono">Password will be auto-generated!</p>
+            <input type="text" id="signupUsername" required placeholder="e.g. Aqif" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-neonMagenta font-mono">
           </div>
-
-          <button type="submit" class="w-full bg-gradient-to-r from-neonMagenta to-purple-600 text-white font-arcade font-bold py-3.5 rounded-xl shadow-glowMagenta hover:opacity-90 transition uppercase tracking-wider text-xs mt-2">
-            Create Account <i class="fa-solid fa-key ml-1.5"></i>
-          </button>
+          <button type="submit" class="w-full bg-gradient-to-r from-neonMagenta to-purple-600 text-white font-arcade font-bold py-3.5 rounded-xl shadow-glowMagenta uppercase tracking-wider text-xs mt-2">Create Account</button>
         </form>
-
       </div>
     </div>
 
-    <!-- PASSWORD MODAL -->
-    <div id="passModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md hidden">
-      <div class="glass-panel max-w-sm w-full rounded-3xl p-6 border border-neonYellow shadow-glowYellow text-center">
-        <div class="w-12 h-12 rounded-full bg-neonYellow/20 text-neonYellow flex items-center justify-center mx-auto mb-3 border border-neonYellow/40">
-          <i class="fa-solid fa-key text-xl"></i>
+    <!-- FULL-SCREEN BOSS BATTLE ARENA MODAL -->
+    <div id="fullScreenBossArena" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-2xl flex flex-col justify-between p-6 hidden">
+      <!-- Top Bars (Boss HP & Player HP) -->
+      <div class="max-w-5xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+        <!-- Boss Bar -->
+        <div class="glass-panel p-4 rounded-2xl border border-neonMagenta/50 shadow-glowMagenta">
+          <div class="flex justify-between text-xs font-mono mb-1">
+            <span class="text-neonMagenta font-bold uppercase"><i class="fa-solid fa-dragon mr-1"></i> BOSS: SHADOW TITAN</span>
+            <span id="bossArenaHpText" class="text-neonYellow font-bold">100 / 100 HP</span>
+          </div>
+          <div class="w-full bg-slate-900 rounded-full h-4 overflow-hidden border border-slate-800">
+            <div id="bossArenaHpBar" class="bg-gradient-to-r from-neonYellow to-neonMagenta h-full transition-all duration-200" style="width: 100%"></div>
+          </div>
         </div>
-        <h3 class="font-arcade text-lg font-bold text-white uppercase">Account Created!</h3>
-        <p class="text-xs text-slate-300 mt-2 font-mono">Your security password:</p>
-        <div class="my-4 p-3 bg-slate-900 rounded-xl border border-neonYellow/50 font-mono text-2xl font-black text-neonYellow tracking-wider" id="generatedPassDisplay">
-          PUNCH-0000
+
+        <!-- Player Bar -->
+        <div class="glass-panel p-4 rounded-2xl border border-neonCyan/50 shadow-glowCyan">
+          <div class="flex justify-between text-xs font-mono mb-1">
+            <span class="text-neonCyan font-bold uppercase"><i class="fa-solid fa-shield-halved mr-1"></i> PLAYER HP (PUNCTURE PENALTY)</span>
+            <span id="playerArenaHpText" class="text-emerald-400 font-bold">100 / 100 HP</span>
+          </div>
+          <div class="w-full bg-slate-900 rounded-full h-4 overflow-hidden border border-slate-800">
+            <div id="playerArenaHpBar" class="bg-gradient-to-r from-emerald-400 to-neonCyan h-full transition-all duration-200" style="width: 100%"></div>
+          </div>
         </div>
-        <button onclick="closePassModal()" class="w-full bg-neonYellow text-slate-950 font-arcade font-bold py-3 rounded-xl hover:bg-yellow-400 transition uppercase text-xs">
-          Start Playing!
+      </div>
+
+      <!-- Center Monster Animation Area -->
+      <div class="flex-1 flex flex-col items-center justify-center relative my-4">
+        <div id="bossMonsterContainer" class="relative flex flex-col items-center">
+          <!-- Monster Avatar / Icon with dynamic animations -->
+          <div id="bossMonsterAvatar" class="w-48 h-48 rounded-full bg-gradient-to-tr from-purple-900 via-slate-900 to-neonMagenta p-1 flex items-center justify-center shadow-glowMagenta monster-idle">
+            <div class="w-full h-full bg-slate-950 rounded-full flex items-center justify-center text-7xl text-neonMagenta">
+              <i class="fa-solid fa-spider"></i>
+            </div>
+          </div>
+          <h3 id="bossArenaStatusMsg" class="font-arcade text-lg font-bold text-neonYellow mt-4 uppercase tracking-widest">HIT THE HIGHLIGHTED TARGET!</h3>
+        </div>
+      </div>
+
+      <!-- Bottom Arena Controls / Target Feedback -->
+      <div class="max-w-md mx-auto w-full glass-panel p-6 rounded-3xl border border-slate-800 text-center space-y-3">
+        <p class="text-xs font-mono text-slate-400">CURRENT TARGET PAD:</p>
+        <div id="bossArenaTargetDisplay" class="text-3xl font-arcade font-black text-neonCyan">WAITING...</div>
+        <button onclick="exitBossArena()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 rounded-xl font-arcade text-xs uppercase">
+          Quit Boss Fight
         </button>
       </div>
     </div>
@@ -153,7 +172,6 @@
     <!-- TOP NAVBAR -->
     <header class="border-b border-slate-800 glass-panel sticky top-0 z-40">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        
         <div class="flex items-center space-x-3 cursor-pointer" onclick="switchNavTab('punch')">
           <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-neonMagenta to-neonCyan p-0.5 flex items-center justify-center shadow-glowCyan">
             <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
@@ -182,12 +200,10 @@
             </div>
           </div>
 
-          <button onclick="handleSignOut()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 hover:text-white px-3 py-1.5 rounded-xl text-xs font-mono transition flex items-center space-x-1.5">
+          <button onclick="handleSignOut()" class="bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-mono transition">
             <i class="fa-solid fa-right-from-bracket text-neonMagenta"></i>
-            <span class="hidden sm:inline">Sign Out</span>
           </button>
         </div>
-
       </div>
     </header>
 
@@ -196,17 +212,15 @@
       
       <!-- TABS -->
       <div class="grid grid-cols-3 gap-2 sm:gap-4 mb-8 bg-slate-900/80 p-1.5 rounded-2xl border border-slate-800/80">
-        <button onclick="switchNavTab('punch')" id="navBtn-punch" class="nav-tab active flex items-center justify-center space-x-2 py-3 px-2 rounded-xl font-arcade text-xs tracking-wider uppercase transition bg-slate-800 text-neonCyan border border-neonCyan/50 shadow-glowCyan">
+        <button onclick="switchNavTab('punch')" id="navBtn-punch" class="nav-tab active flex items-center justify-center space-x-2 py-3 px-2 rounded-xl font-arcade text-xs uppercase transition bg-slate-800 text-neonCyan border border-neonCyan/50 shadow-glowCyan">
           <i class="fa-solid fa-bolt text-sm"></i>
           <span class="font-bold">ESP32 MODES</span>
         </button>
-
-        <button onclick="switchNavTab('leaderboard')" id="navBtn-leaderboard" class="nav-tab flex items-center justify-center space-x-2 py-3 px-2 rounded-xl font-arcade text-xs tracking-wider uppercase transition bg-transparent text-slate-400 hover:text-white hover:bg-slate-800/50">
+        <button onclick="switchNavTab('leaderboard')" id="navBtn-leaderboard" class="nav-tab flex items-center justify-center space-x-2 py-3 px-2 rounded-xl font-arcade text-xs uppercase transition bg-transparent text-slate-400 hover:text-white">
           <i class="fa-solid fa-trophy text-sm"></i>
           <span class="font-bold">LEADERBOARD</span>
         </button>
-
-        <button onclick="switchNavTab('profile')" id="navBtn-profile" class="nav-tab flex items-center justify-center space-x-2 py-3 px-2 rounded-xl font-arcade text-xs tracking-wider uppercase transition bg-transparent text-slate-400 hover:text-white hover:bg-slate-800/50">
+        <button onclick="switchNavTab('profile')" id="navBtn-profile" class="nav-tab flex items-center justify-center space-x-2 py-3 px-2 rounded-xl font-arcade text-xs uppercase transition bg-transparent text-slate-400 hover:text-white">
           <i class="fa-solid fa-user-ninja text-sm"></i>
           <span class="font-bold">PROFILE</span>
         </button>
@@ -220,159 +234,81 @@
             <h2 class="font-arcade text-lg font-bold text-white uppercase tracking-wider flex items-center">
               <i class="fa-solid fa-gamepad text-neonCyan mr-2"></i> Mode Selector
             </h2>
-            <p class="text-xs text-slate-400 font-mono mt-0.5">Secure Web-Trigger Mode Selection</p>
+            <p class="text-xs text-slate-400 font-mono mt-0.5">Secure Web-Trigger & Hardware Sync Mode</p>
           </div>
 
           <div class="flex space-x-2 bg-slate-900 p-1 rounded-xl border border-slate-800">
-            <button onclick="switchPunchSubMode('classic')" id="subBtn-classic" class="sub-mode-btn px-3 py-1.5 rounded-lg text-xs font-arcade font-bold bg-neonCyan/20 text-neonCyan border border-neonCyan/40">
-              Classic 45s Mode
-            </button>
-            <button onclick="switchPunchSubMode('boss')" id="subBtn-boss" class="sub-mode-btn px-3 py-1.5 rounded-lg text-xs font-arcade font-bold bg-transparent text-slate-400 hover:text-white">
-              Regen Boss Battle
-            </button>
-            <button onclick="switchPunchSubMode('duo')" id="subBtn-duo" class="sub-mode-btn px-3 py-1.5 rounded-lg text-xs font-arcade font-bold bg-transparent text-slate-400 hover:text-white">
-              2-Player Mode (Coming Soon)
-            </button>
+            <button onclick="switchPunchSubMode('classic')" id="subBtn-classic" class="sub-mode-btn px-3 py-1.5 rounded-lg text-xs font-arcade font-bold bg-neonCyan/20 text-neonCyan border border-neonCyan/40">Classic 45s</button>
+            <button onclick="switchPunchSubMode('boss')" id="subBtn-boss" class="sub-mode-btn px-3 py-1.5 rounded-lg text-xs font-arcade font-bold bg-transparent text-slate-400 hover:text-white">Boss Arena</button>
+            <button onclick="switchPunchSubMode('duo')" id="subBtn-duo" class="sub-mode-btn px-3 py-1.5 rounded-lg text-xs font-arcade font-bold bg-transparent text-slate-400 hover:text-white">2-Player (Soon)</button>
           </div>
         </div>
 
-        <!-- 1. CLASSIC 45S ESP32 MODE -->
+        <!-- 1. CLASSIC 45S MODE -->
         <div id="mode-classic" class="punch-sub-view grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
           <div class="lg:col-span-7 glass-panel rounded-3xl p-6 border border-slate-800 flex flex-col items-center justify-between relative min-h-[420px]">
             <div class="w-full flex justify-between items-center text-xs font-mono text-slate-400 mb-2">
-              <span><i class="fa-solid fa-wifi text-emerald-400 mr-1"></i> STATUS: <span id="hardwareState" class="text-neonYellow">WAITING FOR MODE SELECTION</span></span>
+              <span><i class="fa-solid fa-wifi text-emerald-400 mr-1"></i> STATUS: <span id="hardwareState" class="text-neonYellow">WAITING FOR START</span></span>
               <span id="classicTimer" class="text-neonCyan font-bold text-sm">TIME: 45s</span>
             </div>
 
-            <!-- Central Active Target Indicator -->
-            <div class="relative w-56 h-56 my-4 flex flex-col items-center justify-center bg-slate-900 rounded-full border-4 border-slate-800 shadow-glowCyan" id="activePadCircle">
+            <div class="relative w-56 h-56 my-4 flex flex-col items-center justify-center bg-slate-900 rounded-full border-4 border-slate-800 shadow-glowCyan">
               <p class="text-[10px] font-mono text-slate-400 uppercase tracking-widest">ACTIVE TARGET</p>
-              <div id="targetPadDisplay" class="text-2xl font-arcade font-black text-neonYellow my-1 text-center px-2">CLICK START ON WEB</div>
+              <div id="targetPadDisplay" class="text-xl font-arcade font-black text-neonYellow my-1 text-center px-2">CLICK START ON WEB</div>
               <p id="hitsDisplay" class="text-xs font-mono text-emerald-400 font-bold">TOTAL HITS: 0</p>
             </div>
 
-            <!-- Start Button & Simulator -->
             <div class="w-full bg-slate-900/90 p-4 rounded-2xl border border-slate-800/80 text-center space-y-3">
-              <button onclick="sendWebCommand('START_CLASSIC')" class="w-full py-3 bg-gradient-to-r from-neonCyan to-blue-600 text-slate-950 rounded-xl font-arcade font-bold text-xs shadow-glowCyan uppercase tracking-wider">
-                <i class="fa-solid fa-play mr-1"></i> Start Classic Mode (Unlock ESP32 Button Pin 15)
+              <button onclick="sendWebCommand('START_CLASSIC')" class="w-full py-3 bg-gradient-to-r from-neonCyan to-blue-600 text-slate-950 rounded-xl font-arcade font-bold text-xs shadow-glowCyan uppercase">
+                <i class="fa-solid fa-play mr-1"></i> Start Classic Mode (Unlock Pin 15)
               </button>
-
-              <p class="text-[10px] font-mono text-slate-400">Simulate Piezo Strikes on Pads (Threshold > 140):</p>
               <div class="grid grid-cols-4 gap-2">
-                <button onclick="simulatePiezoHit(0)" class="py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-arcade border border-slate-700">Pad 0 (TL)</button>
-                <button onclick="simulatePiezoHit(1)" class="py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-arcade border border-slate-700">Pad 1 (TR)</button>
-                <button onclick="simulatePiezoHit(2)" class="py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-arcade border border-slate-700">Pad 2 (BL)</button>
-                <button onclick="simulatePiezoHit(3)" class="py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-arcade border border-slate-700">Pad 3 (BR)</button>
+                <button onclick="simulatePiezoHit(0)" class="py-2 bg-slate-800 text-slate-200 rounded-xl text-xs font-arcade border border-slate-700">Pad 0</button>
+                <button onclick="simulatePiezoHit(1)" class="py-2 bg-slate-800 text-slate-200 rounded-xl text-xs font-arcade border border-slate-700">Pad 1</button>
+                <button onclick="simulatePiezoHit(2)" class="py-2 bg-slate-800 text-slate-200 rounded-xl text-xs font-arcade border border-slate-700">Pad 2</button>
+                <button onclick="simulatePiezoHit(3)" class="py-2 bg-slate-800 text-slate-200 rounded-xl text-xs font-arcade border border-slate-700">Pad 3</button>
               </div>
             </div>
           </div>
 
-          <!-- Classic Side Stats -->
           <div class="lg:col-span-5 space-y-4">
             <div class="glass-panel p-5 rounded-3xl border border-slate-800">
               <p class="text-xs font-mono text-slate-400 uppercase">Performance Tier & LED</p>
               <h3 id="classicTierText" class="text-2xl font-arcade font-black text-slate-300 mt-1">WAITING...</h3>
-              <p id="classicTierDesc" class="text-xs text-slate-400 mt-1"><= 20 Hits: Red LED | 21-40: Yellow LED | > 40: Green LED</p>
             </div>
-
             <div class="glass-panel p-5 rounded-3xl border border-slate-800">
-              <h4 class="font-arcade text-xs font-bold text-slate-300 uppercase mb-3">4 Relay LED Strips State (Pins 12, 26, 27, 14)</h4>
+              <h4 class="font-arcade text-xs font-bold text-slate-300 uppercase mb-3">Relay Strips (Pins 12, 26, 27, 14)</h4>
               <div class="grid grid-cols-2 gap-2 text-center font-mono text-xs">
-                <div id="relay-0" class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-slate-400">Relay 0 (Pin 12)<br><span class="text-[10px] text-slate-500">OFF</span></div>
-                <div id="relay-1" class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-slate-400">Relay 1 (Pin 26)<br><span class="text-[10px] text-slate-500">OFF</span></div>
-                <div id="relay-2" class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-slate-400">Relay 2 (Pin 27)<br><span class="text-[10px] text-slate-500">OFF</span></div>
-                <div id="relay-3" class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-slate-400">Relay 3 (Pin 14)<br><span class="text-[10px] text-slate-500">OFF</span></div>
+                <div id="relay-0" class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-slate-400">Relay 0 (Pin 12)</div>
+                <div id="relay-1" class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-slate-400">Relay 1 (Pin 26)</div>
+                <div id="relay-2" class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-slate-400">Relay 2 (Pin 27)</div>
+                <div id="relay-3" class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-slate-400">Relay 3 (Pin 14)</div>
               </div>
             </div>
           </div>
-
         </div>
 
-        <!-- 2. REGEN BOSS BATTLE MODE -->
+        <!-- 2. BOSS BATTLE MODE SELECTOR -->
         <div id="mode-boss" class="punch-sub-view hidden space-y-6">
-          <div class="glass-panel rounded-3xl p-6 border border-slate-800">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-              <div>
-                <h3 class="font-arcade text-lg font-bold text-neonMagenta uppercase">
-                  <i class="fa-solid fa-dragon mr-2"></i> Regeneration Boss Arena
-                </h3>
-                <p class="text-xs text-slate-400 font-mono">Hit correct pads to reach Level 5 or Level 10 before health regenerates!</p>
-              </div>
-
-              <div class="flex space-x-2">
-                <button onclick="selectBossLevel(1)" id="bossBtn1" class="px-3 py-1.5 rounded-xl text-xs font-arcade bg-neonMagenta/20 text-neonMagenta border border-neonMagenta/40 font-bold">
-                  Boss Level 5
-                </button>
-                <button onclick="selectBossLevel(2)" id="bossBtn2" class="px-3 py-1.5 rounded-xl text-xs font-arcade bg-slate-900 text-slate-400 border border-slate-800">
-                  Boss Level 10 (Hard)
-                </button>
-              </div>
+          <div class="glass-panel rounded-3xl p-8 border border-slate-800 text-center max-w-xl mx-auto space-y-6">
+            <div class="w-20 h-20 rounded-3xl bg-neonMagenta/10 border border-neonMagenta/40 text-neonMagenta flex items-center justify-center text-3xl mx-auto shadow-glowMagenta">
+              <i class="fa-solid fa-dragon"></i>
             </div>
-
-            <!-- Boss Battle Layout -->
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-              
-              <div class="md:col-span-5 bg-slate-900/90 rounded-2xl p-6 text-center border border-slate-800">
-                <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-purple-600 to-neonMagenta p-0.5 mx-auto mb-3 shadow-glowMagenta flex items-center justify-center text-3xl text-white">
-                  <i class="fa-solid fa-robot"></i>
-                </div>
-                <h4 id="bossName" class="font-arcade font-bold text-xl text-white">Shadow Titan</h4>
-                <p id="bossTargetLevel" class="text-xs font-mono text-neonMagenta mt-1">TARGET: REACH LEVEL 5</p>
-
-                <div class="mt-4">
-                  <div class="flex justify-between text-xs font-mono mb-1">
-                    <span class="text-slate-400">BOSS HP (REGENERATING)</span>
-                    <span id="bossHpText" class="text-neonYellow font-bold">100 / 100</span>
-                  </div>
-                  <div class="w-full bg-slate-950 rounded-full h-3 overflow-hidden border border-slate-800">
-                    <div id="bossHpBar" class="bg-gradient-to-r from-neonYellow to-neonMagenta h-full transition-all duration-200" style="width: 100%"></div>
-                  </div>
-                </div>
-
-                <div class="mt-4 flex justify-between items-center bg-slate-950 p-3 rounded-xl border border-slate-800 font-mono text-xs">
-                  <span class="text-slate-400">Current Level:</span>
-                  <span id="playerBossLevel" class="text-neonCyan font-bold text-lg">Level 0 / 5</span>
-                </div>
-              </div>
-
-              <!-- Boss Action Area -->
-              <div class="md:col-span-7 space-y-4">
-                <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 font-mono text-xs text-slate-300 h-32 overflow-y-auto space-y-1" id="bossLog">
-                  <p class="text-neonCyan">> Click "Start Boss Fight" to begin!</p>
-                </div>
-
-                <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 text-center space-y-3">
-                  <p id="bossInstruction" class="text-xs font-mono text-neonYellow font-bold">Target Pad to Hit: NONE</p>
-                  <button onclick="startBossFight()" class="w-full py-3 bg-neonMagenta hover:bg-magenta-600 text-white rounded-xl text-xs font-arcade shadow-glowMagenta font-bold uppercase">
-                    <i class="fa-solid fa-sword mr-1"></i> Start Boss Fight
-                  </button>
-                  <div class="grid grid-cols-4 gap-2 pt-2">
-                    <button onclick="hitBossPad(0)" class="py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-arcade border border-slate-700">Pad 0</button>
-                    <button onclick="hitBossPad(1)" class="py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-arcade border border-slate-700">Pad 1</button>
-                    <button onclick="hitBossPad(2)" class="py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-arcade border border-slate-700">Pad 2</button>
-                    <button onclick="hitBossPad(3)" class="py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-arcade border border-slate-700">Pad 3</button>
-                  </div>
-                </div>
-              </div>
-
+            <div>
+              <h3 class="font-arcade text-2xl font-black text-white">SHADOW TITAN BOSS ARENA</h3>
+              <p class="text-xs text-slate-400 font-mono mt-2">Defeat the boss in full-screen immersion! Hit correct targets, avoid wrong pads or your health drops!</p>
             </div>
+            <button onclick="sendWebCommand('START_BOSS')" class="w-full py-4 bg-gradient-to-r from-neonMagenta to-purple-600 text-white rounded-xl font-arcade font-bold text-xs shadow-glowMagenta uppercase tracking-wider">
+              <i class="fa-solid fa-sword mr-2"></i> Launch Boss Battle (Unlock Pin 15)
+            </button>
           </div>
         </div>
 
-        <!-- 3. 2-PLAYER MODE (COMING SOON) -->
+        <!-- 3. 2-PLAYER MODE -->
         <div id="mode-duo" class="punch-sub-view hidden">
           <div class="glass-panel rounded-3xl p-12 border border-slate-800 text-center max-w-xl mx-auto my-8">
-            <div class="w-16 h-16 rounded-2xl bg-neonYellow/10 border border-neonYellow/30 text-neonYellow flex items-center justify-center text-2xl mx-auto mb-4 shadow-glowYellow">
-              <i class="fa-solid fa-users"></i>
-            </div>
-            <span class="inline-block px-3 py-1 bg-neonYellow/20 text-neonYellow font-arcade text-xs font-bold rounded-full border border-neonYellow/40 mb-3">
-              COMING SOON
-            </span>
+            <span class="inline-block px-3 py-1 bg-neonYellow/20 text-neonYellow font-arcade text-xs font-bold rounded-full border border-neonYellow/40 mb-3">COMING SOON</span>
             <h3 class="font-arcade text-2xl font-black text-white">2-PLAYER DUO MODE</h3>
-            <p class="text-xs text-slate-400 font-mono mt-2 leading-relaxed">
-              Head-to-head multiplayer competition mode is currently under development. Stay tuned for version 2.1!
-            </p>
           </div>
         </div>
 
@@ -381,26 +317,19 @@
       <!-- SECTION: LEADERBOARD -->
       <div id="sec-leaderboard" class="tab-section hidden space-y-6">
         <div class="glass-panel rounded-3xl p-6 border border-slate-800">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h2 class="font-arcade text-xl font-bold text-white uppercase flex items-center">
-                <i class="fa-solid fa-trophy text-neonYellow mr-2"></i> Signed-Up Fighters Leaderboard
-              </h2>
-              <p class="text-xs text-slate-400 font-mono mt-0.5">Strictly ranked by registered users (No automated bots)</p>
-            </div>
-          </div>
-
+          <h2 class="font-arcade text-xl font-bold text-white uppercase flex items-center mb-6">
+            <i class="fa-solid fa-trophy text-neonYellow mr-2"></i> Leaderboard
+          </h2>
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left border-collapse font-mono text-sm">
               <thead>
-                <tr class="border-b border-slate-800 text-[11px] font-mono text-slate-400 uppercase tracking-wider">
+                <tr class="border-b border-slate-800 text-[11px] text-slate-400 uppercase">
                   <th class="py-3 px-4">Rank</th>
                   <th class="py-3 px-4">Fighter</th>
                   <th class="py-3 px-4">Classic Hits</th>
-                  <th class="py-3 px-4">Boss Best</th>
                 </tr>
               </thead>
-              <tbody id="leaderboardRows" class="divide-y divide-slate-800/60 font-mono text-sm"></tbody>
+              <tbody id="leaderboardRows" class="divide-y divide-slate-800/60"></tbody>
             </table>
           </div>
         </div>
@@ -408,53 +337,18 @@
 
       <!-- SECTION: PROFILE -->
       <div id="sec-profile" class="tab-section hidden space-y-6">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div class="lg:col-span-5 glass-panel rounded-3xl p-6 border border-slate-800 space-y-6">
-            <div class="text-center">
-              <div id="profileBigAvatar" class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-neonCyan to-blue-600 p-0.5 mx-auto mb-3 shadow-glowCyan flex items-center justify-center text-3xl font-arcade font-bold text-slate-950">U</div>
-              <h3 id="profileUsername" class="font-arcade text-xl font-bold text-white">Player</h3>
-              <p id="profileRankBadge" class="text-xs font-mono text-neonCyan mt-0.5">FIGHTER RANK: #1</p>
-            </div>
-
-            <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 font-mono space-y-3">
-              <div class="flex justify-between items-center text-xs">
-                <span class="text-slate-400">Username:</span>
-                <span id="profileDisplayUser" class="text-slate-200 font-bold">Player</span>
-              </div>
-              <div class="flex justify-between items-center text-xs">
-                <span class="text-slate-400">Security Password:</span>
-                <span id="profileDisplayPass" class="text-neonYellow font-bold bg-slate-950 px-2 py-1 rounded border border-slate-800">PUNCH-0000</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="lg:col-span-7 glass-panel rounded-3xl p-6 border border-slate-800">
-            <h3 class="font-arcade text-sm font-bold text-slate-200 uppercase tracking-wider mb-4 flex items-center">
-              <i class="fa-solid fa-clock-rotate-left text-neonMagenta mr-2"></i> Player History Log
-            </h3>
-            <div class="overflow-x-auto">
-              <table class="w-full text-left font-mono text-xs">
-                <thead>
-                  <tr class="border-b border-slate-800 text-slate-400 uppercase text-[10px]">
-                    <th class="py-2 px-3">Mode</th>
-                    <th class="py-2 px-3">Score / Result</th>
-                    <th class="py-2 px-3">Timestamp</th>
-                  </tr>
-                </thead>
-                <tbody id="profileHistoryRows" class="divide-y divide-slate-800/60 text-slate-300"></tbody>
-              </table>
-            </div>
-          </div>
+        <div class="glass-panel rounded-3xl p-6 border border-slate-800 text-center max-w-md mx-auto">
+          <div id="profileBigAvatar" class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-neonCyan to-blue-600 mx-auto mb-3 flex items-center justify-center text-3xl font-arcade font-bold text-slate-950">U</div>
+          <h3 id="profileUsername" class="font-arcade text-xl font-bold text-white">Player</h3>
+          <p id="profileDisplayPass" class="text-neonYellow font-bold mt-2 font-mono">PUNCH-0000</p>
         </div>
       </div>
 
     </main>
 
-    <!-- FOOTER -->
     <footer class="border-t border-slate-900 py-4 text-center text-xs font-mono text-slate-400">
-      PiezoPunch Classic Arcade System &copy; 2026. Threshold: 140.
+      PiezoPunch Arcade System &copy; 2026
     </footer>
-
   </div>
 
   <!-- JAVASCRIPT LOGIC -->
@@ -464,15 +358,13 @@
 
     let isClassicPlaying = false;
     let classicTotalHits = 0;
-    let currentTargetPad = -1;
     let classicTimerInterval = null;
 
     let isBossPlaying = false;
-    let bossLevelTarget = 5;
-    let playerBossLevel = 0;
     let bossHp = 100;
-    let currentBossPad = -1;
-    let bossRegenInterval = null;
+    let playerHp = 100;
+    let currentTargetPad = -1;
+    let activeMode = 'classic';
 
     let lastEspMessageTime = 0;
     let mqttClient = null;
@@ -495,11 +387,13 @@
       mqttClient = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
       const forceTopic = 'aqifkk/peizopunch/force';
       const targetTopic = 'aqifkk/peizopunch/target';
+      const stateTopic = 'aqifkk/peizopunch/state';
 
       mqttClient.on('connect', () => {
         mqttText.innerText = 'Waiting for ESP32...';
         mqttClient.subscribe(forceTopic);
         mqttClient.subscribe(targetTopic);
+        mqttClient.subscribe(stateTopic);
       });
 
       mqttClient.on('message', (incomingTopic, payload) => {
@@ -507,29 +401,30 @@
         mqttDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
         mqttText.innerText = 'ESP32 Online';
 
-        if (incomingTopic === targetTopic) {
-          // Terima arahan target sebenar daripada ESP32 (Master)
+        if (incomingTopic === stateTopic) {
+          const stateMsg = payload.toString();
+          if (stateMsg === 'CLASSIC_START') {
+            startClassicTimerSynced();
+          } else if (stateMsg === 'BOSS_START') {
+            startBossArenaSynced();
+          }
+        } 
+        else if (incomingTopic === targetTopic) {
           try {
             const data = JSON.parse(payload.toString());
             if (data.target !== undefined) {
               currentTargetPad = data.target;
-              updateWebTargetUI(currentTargetPad);
+              updateTargetUI(currentTargetPad);
             }
           } catch(e) {}
         } 
         else if (incomingTopic === forceTopic) {
-          // Terima bacaan ketukan piezo
           try {
             const data = JSON.parse(payload.toString());
             if (data.val > 140) {
               handlePiezoInput(data.pad);
             }
-          } catch(e) {
-            const val = parseInt(payload.toString());
-            if (!isNaN(val) && val > 140) {
-              handlePiezoInput(0);
-            }
-          }
+          } catch(e) {}
         }
       });
 
@@ -546,12 +441,68 @@
       }, 2000);
     }
 
-    function updateWebTargetUI(targetPad) {
-      document.getElementById('targetPadDisplay').innerText = 'PAD ' + targetPad;
+    function sendWebCommand(cmd) {
+      if (mqttClient && mqttClient.connected) {
+        mqttClient.publish('aqifkk/peizopunch/command', cmd);
+        if (cmd === 'START_CLASSIC') {
+          activeMode = 'classic';
+          document.getElementById('hardwareState').innerText = 'PRESS PIN 15 ON ESP32';
+          document.getElementById('hardwareState').className = 'text-emerald-400';
+        } else if (cmd === 'START_BOSS') {
+          activeMode = 'boss';
+        }
+        alert('Command sent! Now press physical button (Pin 15) on your ESP32 to start.');
+      } else {
+        alert('MQTT not connected to ESP32!');
+      }
+    }
+
+    // --- CLASSIC MODE SYNC TIMER ---
+    function startClassicTimerSynced() {
+      if (isClassicPlaying) return;
+      isClassicPlaying = true;
+      classicTotalHits = 0;
+      document.getElementById('hardwareState').innerText = 'GAME RUNNING (45s)';
+      document.getElementById('hitsDisplay').innerText = 'TOTAL HITS: 0';
+      document.getElementById('classicTierText').innerText = 'FIGHTING ACTIVE';
+
+      let timeLeft = 45;
+      document.getElementById('classicTimer').innerText = 'TIME: ' + timeLeft + 's';
+
+      classicTimerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById('classicTimer').innerText = 'TIME: ' + timeLeft + 's';
+        if (timeLeft <= 0) {
+          clearInterval(classicTimerInterval);
+          endClassicGame();
+        }
+      }, 1000);
+    }
+
+    // --- FULL-SCREEN BOSS ARENA ---
+    function startBossArenaSynced() {
+      if (isBossPlaying) return;
+      isBossPlaying = true;
+      bossHp = 100;
+      playerHp = 100;
+      updateBossArenaUI();
+
+      document.getElementById('fullScreenBossArena').classList.remove('hidden');
+      triggerMonsterAction('idle');
+    }
+
+    function exitBossArena() {
+      isBossPlaying = false;
+      document.getElementById('fullScreenBossArena').classList.add('hidden');
+    }
+
+    function updateTargetUI(pad) {
+      document.getElementById('targetPadDisplay').innerText = 'PAD ' + pad;
+      document.getElementById('bossArenaTargetDisplay').innerText = 'HIT PAD ' + pad;
 
       for (let i = 0; i < 4; i++) {
         const relayEl = document.getElementById('relay-' + i);
-        if (i === targetPad) {
+        if (i === pad) {
           relayEl.className = "p-3 bg-neonCyan/25 rounded-xl border-2 border-neonCyan text-neonCyan font-bold animate-pulse";
           relayEl.innerHTML = `Relay ${i}<br><span class="text-[10px] text-white">ACTIVE</span>`;
         } else {
@@ -561,16 +512,86 @@
       }
     }
 
-    function sendWebCommand(cmd) {
-      if (mqttClient && mqttClient.connected) {
-        mqttClient.publish('aqifkk/peizopunch/command', cmd);
-        alert('Command sent to ESP32: ' + cmd + '. Please press physical button (Pin 15) now!');
-        startClassicGame();
-      } else {
-        alert('MQTT not connected to ESP32 yet!');
+    function simulatePiezoHit(padIndex) {
+      handlePiezoInput(padIndex);
+    }
+
+    function handlePiezoInput(padIndex) {
+      if (isClassicPlaying) {
+        if (padIndex === currentTargetPad) {
+          classicTotalHits++;
+          document.getElementById('hitsDisplay').innerText = 'TOTAL HITS: ' + classicTotalHits;
+        }
+      } else if (isBossPlaying) {
+        if (padIndex === currentTargetPad) {
+          // Correct Hit -> Damage Boss
+          bossHp = Math.max(0, bossHp - 15);
+          triggerMonsterAction('mad');
+          updateBossArenaUI();
+
+          if (bossHp <= 0) {
+            triggerMonsterAction('die');
+            setTimeout(() => {
+              alert('VICTORY! Boss defeated!');
+              exitBossArena();
+            }, 1200);
+          }
+        } else {
+          // Wrong Hit -> Penalty: Player HP goes down!
+          playerHp = Math.max(0, playerHp - 15);
+          triggerMonsterAction('mad');
+          updateBossArenaUI();
+          flashScreenRed();
+
+          if (playerHp <= 0) {
+            alert('DEFEAT! Player health depleted!');
+            exitBossArena();
+          }
+        }
       }
     }
 
+    function updateBossArenaUI() {
+      document.getElementById('bossArenaHpText').innerText = Math.round(bossHp) + ' / 100 HP';
+      document.getElementById('bossArenaHpBar').style.width = bossHp + '%';
+      document.getElementById('playerArenaHpText').innerText = Math.round(playerHp) + ' / 100 HP';
+      document.getElementById('playerArenaHpBar').style.width = playerHp + '%';
+    }
+
+    function triggerMonsterAction(action) {
+      const avatar = document.getElementById('bossMonsterAvatar');
+      avatar.className = 'w-48 h-48 rounded-full bg-gradient-to-tr from-purple-900 via-slate-900 to-neonMagenta p-1 flex items-center justify-center shadow-glowMagenta';
+      if (action === 'mad') {
+        avatar.classList.add('monster-mad');
+        setTimeout(() => avatar.classList.remove('monster-mad'), 350);
+      } else if (action === 'die') {
+        avatar.classList.add('monster-dying');
+      } else {
+        avatar.classList.add('monster-idle');
+      }
+    }
+
+    function flashScreenRed() {
+      const arena = document.getElementById('fullScreenBossArena');
+      arena.style.backgroundColor = 'rgba(239, 68, 68, 0.4)';
+      setTimeout(() => arena.style.backgroundColor = 'rgba(3, 7, 18, 0.95)', 200);
+    }
+
+    function endClassicGame() {
+      isClassicPlaying = false;
+      document.getElementById('hardwareState').innerText = 'FINISHED';
+      document.getElementById('classicTierText').innerText = 'TOTAL HITS: ' + classicTotalHits;
+      if (currentUser) {
+        if (classicTotalHits > currentUser.bestClassicHits) {
+          currentUser.bestClassicHits = classicTotalHits;
+          document.getElementById('headerScore').innerText = 'HITS: ' + classicTotalHits;
+        }
+        localStorage.setItem('piezo_current_user', JSON.stringify(currentUser));
+        renderLeaderboard();
+      }
+    }
+
+    // --- AUTH & NAVIGATION ---
     function switchAuthTab(tab) {
       const loginBtn = document.getElementById('tabLoginBtn');
       const signupBtn = document.getElementById('tabSignupBtn');
@@ -594,7 +615,6 @@
       e.preventDefault();
       const u = document.getElementById('loginUsername').value.trim();
       const p = document.getElementById('loginPassword').value.trim();
-
       const found = users.find(x => x.username.toLowerCase() === u.toLowerCase() && x.password === p);
       if (found) {
         currentUser = found;
@@ -610,33 +630,16 @@
       e.preventDefault();
       const u = document.getElementById('signupUsername').value.trim();
       if (!u) return;
-
       if (users.some(x => x.username.toLowerCase() === u.toLowerCase())) {
         alert('Username already taken!');
         return;
       }
-
       const randomPass = 'PUNCH-' + Math.floor(1000 + Math.random() * 9000);
-      const newUser = { 
-        username: u, 
-        password: randomPass, 
-        bestClassicHits: 0, 
-        bestBossLevel: 0,
-        history: [] 
-      };
-      
+      const newUser = { username: u, password: randomPass, bestClassicHits: 0 };
       users.push(newUser);
       localStorage.setItem('piezo_users', JSON.stringify(users));
-
       currentUser = newUser;
       localStorage.setItem('piezo_current_user', JSON.stringify(currentUser));
-
-      document.getElementById('generatedPassDisplay').innerText = randomPass;
-      document.getElementById('passModal').classList.remove('hidden');
-    }
-
-    function closePassModal() {
-      document.getElementById('passModal').classList.add('hidden');
       document.getElementById('authScreen').classList.add('hidden');
       updateUI();
     }
@@ -650,14 +653,11 @@
     function switchNavTab(tab) {
       ['punch', 'leaderboard', 'profile'].forEach(t => {
         document.getElementById('sec-' + t).classList.add('hidden');
-        document.getElementById('navBtn-' + t).className = "nav-tab flex items-center justify-center space-x-2 py-3 px-2 rounded-xl font-arcade text-xs tracking-wider uppercase transition bg-transparent text-slate-400 hover:text-white hover:bg-slate-800/50";
+        document.getElementById('navBtn-' + t).className = "nav-tab flex items-center justify-center space-x-2 py-3 px-2 rounded-xl font-arcade text-xs uppercase transition bg-transparent text-slate-400 hover:text-white";
       });
-
       document.getElementById('sec-' + tab).classList.remove('hidden');
-      document.getElementById('navBtn-' + tab).className = "nav-tab active flex items-center justify-center space-x-2 py-3 px-2 rounded-xl font-arcade text-xs tracking-wider uppercase transition bg-slate-800 text-neonCyan border border-neonCyan/50 shadow-glowCyan";
-
+      document.getElementById('navBtn-' + tab).className = "nav-tab active flex items-center justify-center space-x-2 py-3 px-2 rounded-xl font-arcade text-xs uppercase transition bg-slate-800 text-neonCyan border border-neonCyan/50 shadow-glowCyan";
       if (tab === 'leaderboard') renderLeaderboard();
-      if (tab === 'profile') updateProfileView();
     }
 
     function switchPunchSubMode(mode) {
@@ -665,207 +665,22 @@
         document.getElementById('mode-' + m).classList.add('hidden');
         document.getElementById('subBtn-' + m).className = "sub-mode-btn px-3 py-1.5 rounded-lg text-xs font-arcade font-bold bg-transparent text-slate-400 hover:text-white";
       });
-
       document.getElementById('mode-' + mode).classList.remove('hidden');
       document.getElementById('subBtn-' + mode).className = "sub-mode-btn px-3 py-1.5 rounded-lg text-xs font-arcade font-bold bg-neonCyan/20 text-neonCyan border border-neonCyan/40";
-    }
-
-    function startClassicGame() {
-      if (isClassicPlaying) return;
-      isClassicPlaying = true;
-      classicTotalHits = 0;
-      document.getElementById('hardwareState').innerText = 'PRESS BUTTON PIN 15';
-      document.getElementById('hardwareState').className = 'text-emerald-400';
-      document.getElementById('hitsDisplay').innerText = 'TOTAL HITS: 0';
-      document.getElementById('classicTierText').innerText = 'WAITING FOR BUTTON...';
-
-      let timeLeft = 45;
-      document.getElementById('classicTimer').innerText = 'TIME: ' + timeLeft + 's';
-
-      classicTimerInterval = setInterval(() => {
-        timeLeft--;
-        document.getElementById('classicTimer').innerText = 'TIME: ' + timeLeft + 's';
-
-        if (timeLeft <= 0) {
-          clearInterval(classicTimerInterval);
-          endClassicGame();
-        }
-      }, 1000);
-    }
-
-    function simulatePiezoHit(padIndex) {
-      handlePiezoInput(padIndex);
-    }
-
-    function handlePiezoInput(padIndex) {
-      if (isClassicPlaying) {
-        if (padIndex === currentTargetPad) {
-          classicTotalHits++;
-          document.getElementById('hitsDisplay').innerText = 'TOTAL HITS: ' + classicTotalHits;
-        }
-      } else if (isBossPlaying) {
-        hitBossPad(padIndex);
-      }
-    }
-
-    function endClassicGame() {
-      isClassicPlaying = false;
-      document.getElementById('hardwareState').innerText = 'FINISHED';
-      document.getElementById('hardwareState').className = 'text-neonYellow';
-      document.getElementById('targetPadDisplay').innerText = 'GAME OVER';
-
-      for (let i = 0; i < 4; i++) {
-        document.getElementById('relay-' + i).className = "p-3 bg-slate-900 rounded-xl border border-slate-800 text-slate-400";
-        document.getElementById('relay-' + i).innerHTML = `Relay ${i}<br><span class="text-[10px] text-slate-500">OFF</span>`;
-      }
-
-      let tier = "RED LED (<=20 HITS)";
-      if (classicTotalHits > 40) tier = "GREEN LED (>40 HITS) - MASTER!";
-      else if (classicTotalHits > 20) tier = "YELLOW LED (21-40 HITS) - GOOD!";
-
-      document.getElementById('classicTierText').innerText = tier;
-
-      if (currentUser) {
-        if (classicTotalHits > currentUser.bestClassicHits) {
-          currentUser.bestClassicHits = classicTotalHits;
-          document.getElementById('headerScore').innerText = 'HITS: ' + classicTotalHits;
-        }
-        currentUser.history.unshift({ mode: 'Classic 45s', score: classicTotalHits + ' Hits', time: 'Just now' });
-        localStorage.setItem('piezo_current_user', JSON.stringify(currentUser));
-        updateUsersStorage();
-      }
-    }
-
-    function selectBossLevel(lvl) {
-      bossLevelTarget = lvl === 1 ? 5 : 10;
-      document.getElementById('bossTargetLevel').innerText = `TARGET: REACH LEVEL ${bossLevelTarget}`;
-      document.getElementById('bossBtn1').className = lvl === 1 ? "px-3 py-1.5 rounded-xl text-xs font-arcade bg-neonMagenta/20 text-neonMagenta border border-neonMagenta/40 font-bold" : "px-3 py-1.5 rounded-xl text-xs font-arcade bg-slate-900 text-slate-400 border border-slate-800";
-      document.getElementById('bossBtn2').className = lvl === 2 ? "px-3 py-1.5 rounded-xl text-xs font-arcade bg-neonMagenta/20 text-neonMagenta border border-neonMagenta/40 font-bold" : "px-3 py-1.5 rounded-xl text-xs font-arcade bg-slate-900 text-slate-400 border border-slate-800";
-    }
-
-    function startBossFight() {
-      if (isBossPlaying) return;
-      isBossPlaying = true;
-      playerBossLevel = 0;
-      bossHp = 100;
-      updateBossUI();
-
-      logBossMessage("Boss Fight Started!");
-      pickNewBossPad();
-
-      bossRegenInterval = setInterval(() => {
-        if (isBossPlaying) {
-          bossHp = Math.min(100, bossHp + 5);
-          updateBossUI();
-          logBossMessage("Boss regenerates +5 HP!");
-        }
-      }, 2000);
-    }
-
-    function pickNewBossPad() {
-      currentBossPad = Math.floor(Math.random() * 4);
-      document.getElementById('bossInstruction').innerText = `HIT PAD ${currentBossPad} NOW!`;
-    }
-
-    function hitBossPad(pad) {
-      if (!isBossPlaying) return;
-      if (pad === currentBossPad) {
-        playerBossLevel++;
-        bossHp = Math.max(0, bossHp - (100 / bossLevelTarget));
-        logBossMessage(`Correct Pad! Level: ${playerBossLevel}/${bossLevelTarget}`);
-
-        if (playerBossLevel >= bossLevelTarget) {
-          winBossBattle();
-          return;
-        }
-        pickNewBossPad();
-      } else {
-        logBossMessage(`Wrong pad! Hit Pad ${pad}`);
-      }
-      updateBossUI();
-    }
-
-    function updateBossUI() {
-      document.getElementById('bossHpText').innerText = Math.round(bossHp) + ' / 100';
-      document.getElementById('bossHpBar').style.width = bossHp + '%';
-      document.getElementById('playerBossLevel').innerText = `Level ${playerBossLevel} / ${bossLevelTarget}`;
-    }
-
-    function logBossMessage(msg) {
-      const log = document.getElementById('bossLog');
-      const p = document.createElement('p');
-      p.className = "text-slate-300";
-      p.innerText = "> " + msg;
-      log.prepend(p);
-    }
-
-    function winBossBattle() {
-      isBossPlaying = false;
-      clearInterval(bossRegenInterval);
-      logBossMessage("VICTORY! Boss defeated!");
-      document.getElementById('bossInstruction').innerText = "BOSS DEFEATED!";
-
-      if (currentUser) {
-        if (bossLevelTarget > currentUser.bestBossLevel) {
-          currentUser.bestBossLevel = bossLevelTarget;
-        }
-        currentUser.history.unshift({ mode: `Boss Lvl ${bossLevelTarget}`, score: 'Victory', time: 'Just now' });
-        localStorage.setItem('piezo_current_user', JSON.stringify(currentUser));
-        updateUsersStorage();
-      }
-    }
-
-    function updateUsersStorage() {
-      const idx = users.findIndex(x => x.username.toLowerCase() === currentUser.username.toLowerCase());
-      if (idx !== -1) {
-        users[idx] = currentUser;
-      } else {
-        users.push(currentUser);
-      }
-      localStorage.setItem('piezo_users', JSON.stringify(users));
     }
 
     function renderLeaderboard() {
       users.sort((a, b) => b.bestClassicHits - a.bestClassicHits);
       const rows = document.getElementById('leaderboardRows');
       rows.innerHTML = '';
-
       if (users.length === 0) {
-        rows.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-slate-500">No signed-up users yet.</td></tr>`;
+        rows.innerHTML = `<tr><td colspan="3" class="py-4 text-center text-slate-500">No users yet.</td></tr>`;
         return;
       }
-
       users.forEach((u, i) => {
         const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-900/50 transition";
-        tr.innerHTML = `
-          <td class="py-3 px-4 font-bold">#${i + 1}</td>
-          <td class="py-3 px-4 text-white font-bold">${u.username}</td>
-          <td class="py-3 px-4 text-neonCyan font-bold">${u.bestClassicHits || 0} Hits</td>
-          <td class="py-3 px-4 text-neonYellow">Level ${u.bestBossLevel || 0}</td>
-        `;
+        tr.innerHTML = `<td class="py-3 px-4 font-bold">#${i + 1}</td><td class="py-3 px-4 text-white font-bold">${u.username}</td><td class="py-3 px-4 text-neonCyan font-bold">${u.bestClassicHits || 0} Hits</td>`;
         rows.appendChild(tr);
-      });
-    }
-
-    function updateProfileView() {
-      if (!currentUser) return;
-      document.getElementById('profileUsername').innerText = currentUser.username;
-      document.getElementById('profileDisplayUser').innerText = currentUser.username;
-      document.getElementById('profileDisplayPass').innerText = currentUser.password;
-      document.getElementById('profileBigAvatar').innerText = currentUser.username.charAt(0).toUpperCase();
-
-      const historyRows = document.getElementById('profileHistoryRows');
-      historyRows.innerHTML = '';
-      currentUser.history.forEach(h => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-950/40";
-        tr.innerHTML = `
-          <td class="py-2.5 px-3 text-neonCyan">${h.mode}</td>
-          <td class="py-2.5 px-3 font-bold text-white">${h.score}</td>
-          <td class="py-2.5 px-3 text-slate-400">${h.time}</td>
-        `;
-        historyRows.appendChild(tr);
       });
     }
 
@@ -874,6 +689,8 @@
       document.getElementById('headerUsername').innerText = currentUser.username;
       document.getElementById('headerScore').innerText = 'HITS: ' + (currentUser.bestClassicHits || 0);
       document.getElementById('headerAvatar').innerText = currentUser.username.charAt(0).toUpperCase();
+      document.getElementById('profileUsername').innerText = currentUser.username;
+      document.getElementById('profileDisplayPass').innerText = currentUser.password;
       renderLeaderboard();
     }
   </script>
