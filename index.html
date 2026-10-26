@@ -493,19 +493,32 @@
       const mqttText = document.getElementById('mqttText');
 
       mqttClient = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
-      const topic = 'aqifkk/peizopunch/force';
+      const forceTopic = 'aqifkk/peizopunch/force';
+      const targetTopic = 'aqifkk/peizopunch/target';
 
       mqttClient.on('connect', () => {
         mqttText.innerText = 'Waiting for ESP32...';
-        mqttClient.subscribe(topic);
+        mqttClient.subscribe(forceTopic);
+        mqttClient.subscribe(targetTopic);
       });
 
       mqttClient.on('message', (incomingTopic, payload) => {
-        if (incomingTopic === topic) {
-          lastEspMessageTime = Date.now();
-          mqttDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
-          mqttText.innerText = 'ESP32 Online';
+        lastEspMessageTime = Date.now();
+        mqttDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        mqttText.innerText = 'ESP32 Online';
 
+        if (incomingTopic === targetTopic) {
+          // Terima arahan target sebenar daripada ESP32 (Master)
+          try {
+            const data = JSON.parse(payload.toString());
+            if (data.target !== undefined) {
+              currentTargetPad = data.target;
+              updateWebTargetUI(currentTargetPad);
+            }
+          } catch(e) {}
+        } 
+        else if (incomingTopic === forceTopic) {
+          // Terima bacaan ketukan piezo
           try {
             const data = JSON.parse(payload.toString());
             if (data.val > 140) {
@@ -531,6 +544,21 @@
           mqttText.innerText = 'ESP32 Offline';
         }
       }, 2000);
+    }
+
+    function updateWebTargetUI(targetPad) {
+      document.getElementById('targetPadDisplay').innerText = 'PAD ' + targetPad;
+
+      for (let i = 0; i < 4; i++) {
+        const relayEl = document.getElementById('relay-' + i);
+        if (i === targetPad) {
+          relayEl.className = "p-3 bg-neonCyan/25 rounded-xl border-2 border-neonCyan text-neonCyan font-bold animate-pulse";
+          relayEl.innerHTML = `Relay ${i}<br><span class="text-[10px] text-white">ACTIVE</span>`;
+        } else {
+          relayEl.className = "p-3 bg-slate-900 rounded-xl border border-slate-800 text-slate-400";
+          relayEl.innerHTML = `Relay ${i}<br><span class="text-[10px] text-slate-500">OFF</span>`;
+        }
+      }
     }
 
     function sendWebCommand(cmd) {
@@ -651,8 +679,6 @@
       document.getElementById('hitsDisplay').innerText = 'TOTAL HITS: 0';
       document.getElementById('classicTierText').innerText = 'WAITING FOR BUTTON...';
 
-      pickNewClassicTarget();
-
       let timeLeft = 45;
       document.getElementById('classicTimer').innerText = 'TIME: ' + timeLeft + 's';
 
@@ -667,47 +693,18 @@
       }, 1000);
     }
 
-    function pickNewClassicTarget() {
-      let next;
-      do {
-        next = Math.floor(Math.random() * 4);
-      } while (next === currentTargetPad);
-      currentTargetPad = next;
-
-      document.getElementById('targetPadDisplay').innerText = 'PAD ' + currentTargetPad;
-
-      for (let i = 0; i < 4; i++) {
-        const relayEl = document.getElementById('relay-' + i);
-        if (i === currentTargetPad) {
-          relayEl.className = "p-3 bg-neonCyan/20 rounded-xl border border-neonCyan text-neonCyan font-bold";
-          relayEl.innerHTML = `Relay ${i}<br><span class="text-[10px]">ON (LOW)</span>`;
-        } else {
-          relayEl.className = "p-3 bg-slate-900 rounded-xl border border-slate-800 text-slate-400";
-          relayEl.innerHTML = `Relay ${i}<br><span class="text-[10px] text-slate-500">OFF</span>`;
-        }
-      }
-    }
-
     function simulatePiezoHit(padIndex) {
       handlePiezoInput(padIndex);
     }
 
-    // Fungsi cermin untuk menyelaraskan kiri/kanan sebenar dengan web
     function handlePiezoInput(padIndex) {
-      let mappedPad = padIndex;
-      if (padIndex === 0) mappedPad = 1;
-      else if (padIndex === 1) mappedPad = 0;
-      else if (padIndex === 2) mappedPad = 3;
-      else if (padIndex === 3) mappedPad = 2;
-
       if (isClassicPlaying) {
-        if (mappedPad === currentTargetPad) {
+        if (padIndex === currentTargetPad) {
           classicTotalHits++;
           document.getElementById('hitsDisplay').innerText = 'TOTAL HITS: ' + classicTotalHits;
-          pickNewClassicTarget();
         }
       } else if (isBossPlaying) {
-        hitBossPad(mappedPad);
+        hitBossPad(padIndex);
       }
     }
 
